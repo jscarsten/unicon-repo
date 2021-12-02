@@ -1,0 +1,476 @@
+UNICON NOTES
+
+QUESTIONS :
+	Why are structures indexed from 1?
+		only idea is that beginning of structure is index 1 and end is index 0
+	Confused about reversible assignment
+	confused about bal() function and balanced strings 
+	Pg 47 concordance program	
+	Pg 56 if s had the value "foo" then s(x) -> foo(x)?
+	pg 60 parallel evaluation ex at top
+	how does map() work?
+		
+
+Goal-Directed Evaluation
+	- each expression evaluates to success or failure
+	
+	instead of...
+		while(i :=read()) ~= -1 do
+			process(i)
+	
+	you can do...
+		while(process(read))
+		
+	allows for certain cool expressions 
+		if 3 < i < 7 then ...
+		
+Fallible Expressions
+	- some expressions fail to produce a result, therefore failing
+	- fallible expressions control the flow of execution
+	- predicates are expressions whose purpose is to fail if a condition is not satisfied
+		- ex. x[i] fails if i is out of index
+		      x[i:j] fails if i or j is out of index
+			  read() fails is End of File
+	- assume any procedure is fallible and check if it failed
+		- unless you know for sure that it is infallible or if failure doesnt matter
+	- < are common numeric predicates
+	- /x or \x test a single operand and test if is null or non-null
+		- returns x
+	- numeric comparison 
+		<  <= > >= = ~=
+	- lexical (alphabetic) comparison
+		<< <<= >> >>= == ~==
+	- reference comparison
+		=== ~===
+
+Generators
+	- expressions that can generate more thaat one result are called generators
+	- ex. find("lu", "honolulu") #produces all positions where the substring occurs
+	- if a surrounding expression only needs 1 value from a generator, then the generator
+	  will procduce the 1st value
+	- ex. 3 < find("or", "horror")
+		  find returns 2 first which fails
+		  find returns 5 next which succeds
+	- alternator operator |
+		- expr1 | expr2
+		- ex. x = (3 | 5) 
+		      checks to see if x is 3 or 5
+		- ex. (x | y) = (3 | 5)
+			  checks tp see if x or y is 3 or 5
+			  equivalent in C :
+					(x == 3) || (x == 5) || (y == 3) || (y == 5)
+	- to generator
+		- ex. i to j produces all values between i and j
+		- ex. t to j by k procduces all values between i and j incremented by know
+	-  bounded expessions
+		- expressions that never resume their generator subexpressions
+		- ex. if statements, while statements
+		- ex. expr1 ; expr2 evaluates exp1 tehn expr2 in order without backtracking
+		
+Iteration and Control Structures
+	- The big difference b etween control structures and ordinary operators or 
+	  procedures is that ordinary operators and procedures don't execute until their 
+	  arguments have been evaluated and produced a result; they don't execute at all 
+	  if an argument fails. In contrast, a control structure uses one of its arguments
+	  to decide whether (or how many times) to evaluate its other arguments.
+	- every control structure
+		- like a for loop sort of
+		- every expr1 do expr2
+		- ex. every i := 1 to 10 do write(i)
+		- generators are used for the first expression
+		- better way to do the loop
+			- every write(1 to 10)
+		- a generator operand to a non-generator can become a generator with the every
+		  control structure
+		- every expressions are more flexible than for loops 
+			- ex. every func(1 | 4 | 9 | 16 | 25 | 36)
+			      is the same as...
+				  every func((1 to 6)^2)
+		- other control structures
+			- until expr1 do expr2
+				- works like a while loop except it executes expr2 as long as expr1 fails
+			- repeat expr
+				- infinite loop 
+			- case expr of {
+				branch1: expr1
+				branch2: expr2
+				...
+				default: expr_i
+			
+			  }
+				- branch expressions can be generators, expr evaluates each generated value
+		- exit(), stop(), runerr() functions all terminate the program
+		- break expr 
+			- breaks out of a loop
+			- expr is evaluated outside of the loop and treated as the value produced by executing loop
+		- next
+			- like continue
+			
+Procedures
+	- like a function
+		- ex. procedure poly(x,a,b,c)
+			       return a * x^2 + b * x + called
+			  end
+	- Parameters
+		- passed by value except for structured data types which are passed by reference
+			- parameters passed by value get a copy of the values
+			- any changes in the copy will not be reflected in the original
+		- a procedure with too many parameters will discard the extras
+			- valuable for prototyping 
+		- a procedure with too few parameters will assign &null to missing ones
+		- operators / and \
+			- /x succeeds and return x if the value is &null
+				used to assign default values to variables
+				- ex.
+					procedure succ(x, i)
+						/i := 1
+						return x + i
+					end
+					
+					if called as succ(10, the missing parameter is assigned the null value 
+					then the / tests if i is null which succeeds; therefore the value 1 is assigned
+			- \ checks if hte argument is non null
+				- ex. 
+					write("The value of x is" \x)
+					
+					if x is null \x will fail and write will fail
+					
+		- defaulting and type conversion exists for much of the built in functions
+			- ex. 
+				procedure succ(x:integer, i:integer:1)
+				
+				converts both x and i to integers and enforces a default 1 for i if it is missing
+				in the calling expression
+	- Variables and Scope
+		- the scope of parameters is limited to the body of the procedure
+		- parameters and procedures are special forms of the two types of variables
+		- Global and Local variables
+		- variables are local by default
+		- define a global variable outside a procedure
+			- ex. global MyGlobal
+		- when you define a procedure, it creates a global variable intitialized with the procedure 
+		  value containing the procedure's intructions
+		- inital clause
+			- initialize static variables in ways that arent handled by initializers
+			- ex. 
+				procedure fib()
+					static x,y
+					local z
+					initial {
+						x := 0
+						y := 1
+						return 1
+					}
+					
+					z := x + y
+					x := y
+					y := z
+				end
+			
+				this returns the next number in the fibonacci sequence each time it is called
+				it uses static variables to remember the results of the previous call
+	- Writing your own Generators
+		- you can use the "suspend" keyword instead of "return" in a procedure to create a generator
+		- suspend saves the point of execution within the procedure
+		- ex. procedure to generate squares
+			procedure squares()
+				odds := 1
+				sum := 0
+				repeat {
+					suspend sum
+					sum +:= odds
+					odds +:= 2
+				}
+			end
+		
+			now we can use it in an every structure
+			
+			every munge(squares())
+			
+			this is an infinite loop since every will always resume squares() whether
+			or not munge() succeeds or fails
+		- the fail expression makes the procedure fail
+			- control goes to the calling procedure returning no value
+			- ex. 
+				procedure nonblanks(s) 
+					every c := !s do {
+						if c == "#" then fail
+						if c ~== " " then suspend c
+					}
+				end
+				
+				produces all the nonblank characters in a string
+	- Recursion
+		- ex. towers of hanoi
+			procedure hanoi(n, needle1:1, needle2:2)
+			local other
+				if n = 1 then write("Move disk from ", needle1, " to ", needle2)
+				else{
+					other := 6 - needle1 - needle2 #3
+					hanoi(n - 1, needle1, other)
+					write("Move disk from ", needle1, " to " needle2)
+					hanoi(n - 1, other, needle2)
+				}
+			end
+		
+Structures
+	- Tables(hashtable, dictionary), Lists, Records, Sets
+	- copy() makes a shallow copy 
+	- deepcopy() makes a deep copy
+	- Tables
+		- Unordered, collection of values that are accessed uing associated keys
+		- most versatile structure
+			- the others re special cases of tables optimized for common operations
+		- ex. 
+			T := table()
+			T["hello"] := "goodbye" 
+			# defines a key-value pair, key -> hello, value -> goodbye
+			
+		- table() takes an optional arg which defines the default value when a lookup fails
+			- the default of the default is &null
+		- insert(T, k1, v1, k2, v2, ...) adds new key-val pairs
+		- delete(T, k1, k2, k3, ...) deletes key-val pairs based on key
+		- unary operation * produces the size of the argument
+			- *T gives the number of pairs
+		- !T generates the values stored not the keys
+		- unary ? is the random operator	
+			- ?T gives a random value in the table not the key
+		- member(T,k) succeeds if k is a key in T and fails otherwise
+		- key(T) generates the keys
+		- ex. Wordcounts, getword() generates a word
+			wordcount := table(0)
+			every word := getword() do wordcount[word] +:= 1
+			evert word := key(wordcount) do write(word," ", wordcount[word])
+		- the keys of a table are a set
+		- using the ! operator generates the values in a psuedorandom order
+		- tables support set operations
+			- union T1++T2
+			- intersection T1**T2
+			- difference T1--T2
+			- for union and intersection when duplicate keys occur the left operands values are used
+	- Lists 
+		- dynamically sized, ordered collections of values
+		- indexed starting with 1
+		- can insert anywhere in the list
+		- take the place of arrays, queues, and stacks
+		- created with list()
+			- optional arguments are size and initial value
+			- default is 0 and &null
+		- or created with...
+			- L := ["linux, 2.0, "unix"]
+		- or with list comprehension
+			- L := [: expr :]
+		- insert(L, i, x) inserts x at index i in list Lists
+		- delete(L,i) deletes and element at index i
+		- no type restriction on list elements
+		- multidimensional lists
+			- L[2][3] is the same as L[2, 3]
+		- common operators
+			- *L -> size
+			- !L -> generate elements in sequence
+			- ?L -> generate elements randomly
+		- member(L, k) succeeds if 0 < integer(k) <- *L
+		- slice lists with L[i:j]
+			- L[i+:j] -> L[i:i+j]
+		- concatenation operator
+			- L1 ||| L2
+	- Records
+		- fixed size, ordered collection whose elements are accessed using user-defined fields
+		- A record is declared as a glbal name that introduces a new type witha corresponding 
+		  constructor procedure
+		- field names are a comma-seperated list of identifiers enclosed in parentheses
+		- ex. 
+			record complex(re, im)
+		- instances are created by using a contructor procedure with the name of the record type
+		- the fields of an instance are accessed by using dot notation or index
+		- you can use records as special tables, or lists with  constant size and fixed keys
+		- member(R,s) test whether s is a field in R
+		- key(R) generates the field names
+		- functions like insert() and push() arent supported
+		- ex. 
+			a := complex(0,0)
+			b := complex(1, -1)
+			if a.re = b.re then write("not likely")
+			if a["re"] = a[2] then write("a.re and a.im are equal")
+		- records can be seen as optimized special objects with no methods
+	- Sets
+		- unordered collection of values with the uniqueness property
+		- set(x...) creates a set from its arguments
+		- set("rock" lobster", 'B', 52) -> set(["rock" lobster", 'B', 52])
+		- set(L) not allowed, instead do set([L])
+		- can do set comprehension by wrapping the comprehension in a list
+			- set([: 2 to 20 by 2:])
+		- supports member(), insert(), delete()
+		- set operations
+			- S1++S2 union
+			- S1**S2 intersection
+			- S1--S2 difference
+		- because a set can contain any value, it can contain a reference to itself
+			- this is a difference between unicon sets and mathematical sets
+			- unicon sets are also finite
+		- uniq UNIX utility filters duplicate lines to stdin and writes to stdout
+		- ex. procedure main()
+				S := set()
+				while line := read() do
+					if not member(S, line) then {
+						insert(S,line)
+						write(line)
+					}
+			  end 
+		- sets have no default value and do not support indexing
+	- Using structures
+		- structures can contain structures
+			- allows for complex organization of date
+		- example code in VM
+	*** link keyword allows you to import modules ***
+	
+String Processing
+	*** || operator concatenates strings ***
+	*** == operator compares strings ***
+	- csets are denoted with single quotes ''
+		- like sets, no duplicates
+		- csets and strings are convertible
+	- tricks
+		- see if a string is all vowels
+			if cset(s) == 'aeiou' then ...
+		- find all distinct characters in a string	
+			n := *cset(s)
+		- ! operator gives the members of a cset in sorted order
+	- character escapes
+		- \n, \t
+		- \x41, hex
+		- control characters represeted with ^
+			CTRL-C -> \^c
+		- escape code table on page 43 of UNICON book
+	- string scanning
+		- scanning environment consists of 
+			- string &subject and string &positions
+		- enviroment created with 
+			- s ? expr
+		- binary ? operator sets subject on the left and inits position to 1
+		  then it executes the expression on the right
+		- expression usually uses various matching functions 
+			- a matching function changes the position and returns a substring
+			  between the old and new positions
+				- ex. move(j) moves the position j places to the right
+				- ex. 
+					text ? {
+						while move(1) do
+							write(move(1))
+					}
+					# this writes every other character of text
+				- ex. tab(i) sets &pos to its argument and returns the substring 
+				  it passed over, tab(0) returns current position to end of string
+				- ex. find() looks for substrings
+				*** Note tab() and move() reset the &pos upon failure ***
+			- matching functions have 3 optional parameters
+				- a string to examine, default -> &subject
+				- 2 integers, where in the sring the processing will be performed,
+				  default -> 1, 0
+			- unary equals -> =s
+				- the same as tab(match(s))
+				- means check if the current position is the same as s, and if it is
+				  move past it.
+			- refer to unicon book pg 44 for more string scanning functions
+
+Advanced Language Features
+	- alternation operator (|) resembles short circuit OR
+		- generates left operand and only evaluates the right operand if the left fails
+	- conjunction operator (&) resembles short circuit AND
+		- evaluates left and if that succeeds, evaluates right and the result of the 
+		  expression if it succeeds is the result of the right operand
+		- alternate syntax expr1 & expr2 -> (expr1, expr2)
+			- any number of expressions can be present
+	- negation
+		- not keyword, not expr
+		- if expr has no result, then not expr succeeds and produces a null value
+		- if expr produces a value, then not expr fails 
+	- list structures and parameter lists
+		- prodecure myfunc(x,y,z[])
+			- this makes any parameters supplied after the third is a list
+			- ex. myfunc(3,4,5,6,7)
+					-> x = 3
+					   y = 4
+					   z = [5,6,7]
+		- supply a list as a parameter	
+			- ex. write ! L
+					-> all elements of L are given to write
+	- Co-expressions
+		- independent, encapuslted thread-like-context where the results of 
+		  an expression can be picked off one at a time
+		- you might need to seperate the evaluation of an expression from it's location
+		  in the code
+			- normal way to do this is with a procedure
+			- what if you want to use the results from a single instance of a generator
+				- ex. 
+					labelname := create("_L" || seq())
+					varname := create ("_V" || seq())
+			- create(expr) allocates and initializes an evaulation context and memory needed 
+			  to evaulate expr, but does not evaluate it
+			- the co-expression value may be used outside the call where it is created, so 
+			  the evaluation context includes a copy of the local varibales and parameters needed
+			  in the expression
+			- when a co-expression is activated, it produces the next value
+				- activated with @ operator.
+				- each call of @labelname produces "_L1", then "_L2", etc
+			- after a co-expression produces all the results any further @ calls will fail
+			- the ^ operator produces a the same co-expression, but rewound to the beginning
+				- ex. c :- ^c
+	- User-Defined Control Structures
+		- co-expressions can be used to implement new control structures when procedures
+		  that take co-expression parameters are used to control the order and number of
+		  times that they are activated
+		- can be called like
+			proc([create e1, create e2, ... create en])
+			or
+			proc{e1, e2, ..., en}
+	- Coroutines
+		- procedures have an asymmetric relationship
+			- when a procedure is called the execution starts from the top
+			- when a coroutine is called, execution starts from the point execution was suspended
+		- Process called resumption
+	- Permutations
+		- map() can be used to permute strings
+			- ex. write(map("01234", "43210", "abcde")
+					-> returns "edcbe"
+			- ex. map("Mm/Dd/XxYy", "Dd/Mm/XxYy", date)
+					-> swaps the months and days in a date string
+			*** Note map() removes punctuation characters from fixed format strings
+	- Simulation
+		- Galton box example
+		- FillArc(x,y,width,height) : fills an ellipse defined by a bounding rectangle
+		- WAttrub("attr=value") : generic getter/setter for window attributes
+			- fg = foreground color
+			- drawop = raster drawing operation
+		- Window("attr-value", ...) opens a window with characteristics defined by the 
+		  string attr values
+		- WDelay(t) : waits until t milliseconds have passed
+		- WDone() : waits fro user to dismiss the output window by pressing "q" and then
+		  terminates the program and closes the window
+			 
+		
+
+	
+			
+				
+				  
+			
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	

@@ -1,0 +1,16 @@
+# What do I compute 
+
+procedure main()
+	local i,j,old_r,r
+	i := read()
+	j := read()
+	old_r := r := min(i,j)
+	while(r > 0) do {
+		old_r := r
+		if i > j then
+			i := r := i % j
+		else 
+			j := r := j % i 
+	}
+	write(old_r)
+end

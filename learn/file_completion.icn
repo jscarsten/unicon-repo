@@ -1,0 +1,6 @@
+#file completion
+#finds the full name of the file given the first few letters of a filename and a list of complete filenames
+
+procedure complete(prefix, filenames)
+	suspend match(prefix, p := !filenames) & p
+end

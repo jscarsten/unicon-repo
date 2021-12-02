@@ -1,0 +1,95 @@
+
+
+link graphics
+global pegsize, height, width, pegsize2
+
+procedure main(args)
+	local n, steps := 10
+	pegsize := 10
+	pegsize2 := pegsize * 2
+
+	n := integer(args[1]) | 100
+	setup_window(steps)
+
+	every 1 to n do galton(steps)
+
+	WDone()
+end
+
+procedure setup_window(n)
+	local max, xpos, ypos, i, j
+	# Draw the n levels of pegs
+	# Pegboard size is 2n-1 square
+	# Expected max value of histogram is (n, n/2)/2ˆn
+	# ... approximate with something simpler?
+
+	max := n*n/pegsize
+	width := (2*n+1)*pegsize
+	height := width + n*n/2*pegsize
+
+	Window("size=" || width || "," || height, "fg=grayish-white")
+	WAttrib("fg=dark-grey")
+
+	every i := 1 to n do {
+		ypos := i * pegsize2
+		xpos := width/2 - (i - 1) * pegsize - pegsize/2
+		every j := 1 to i do {
+			FillArc(xpos, ypos, pegsize, pegsize)
+			xpos +:= pegsize2
+		}
+	}
+
+	# Set up drawing mode to draw the falling balls
+	WAttrib("fg=black")
+	WAttrib("drawop=reverse")
+end
+
+# Do it!
+procedure galton(n)
+	local xpos, ypos, oldx, oldy
+	xpos := oldx := width/2 - pegsize/2
+	ypos := oldy := pegsize
+
+	# For every ball...
+	every 1 to n do {
+		if ?2 = 1 then xpos -:= pegsize
+		else xpos +:= pegsize
+		ypos +:= pegsize2
+		animate(oldx, oldy, xpos, ypos)
+		oldx := xpos; oldy := ypos
+	}
+
+	# Now the ball falls to the floor
+	animate(xpos, ypos, xpos, ypos + 40)
+	animate(xpos, ypos+40, xpos, ypos + 200)
+
+	# Record this ball
+	draw_ball(xpos)
+end
+
+procedure animate(xfrom, yfrom, xto, yto)
+	animate_actual(xfrom, yfrom, xto, yfrom, 4)
+	animate_actual(xto, yfrom, xto, yto, 10)
+end
+
+# Drawing op is already set to "reverse", and fg colour is black.
+procedure animate_actual(xfrom, yfrom, xto, yto, steps)
+	local x := xfrom, y := yfrom, xstep, ystep, i, lastx, lasty
+	xstep := (xto - xfrom)/steps
+	ystep := (yto - yfrom)/steps
+	
+	every i := 1 to steps do {
+		lastx := x; lasty := y
+		FillArc(x, y, pegsize, pegsize)
+		WDelay(1)
+		FillArc(x, y, pegsize, pegsize)
+		x +:= xstep; y +:= ystep
+	}
+end
+
+procedure draw_ball(x)
+	static ballcounts
+	initial ballcounts := table(0)
+	ballcounts[x] +:= 1
+	FillArc(x, height-ballcounts[x]*pegsize, pegsize, pegsize)
+end

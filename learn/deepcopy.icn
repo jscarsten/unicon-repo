@@ -1,0 +1,24 @@
+# Deep Copy example
+# works for tree structures but not for cyclic structures like graphs
+
+
+procedure deepcopy(x)
+	local y
+	case type(x) of {
+		"table"|"list"|"record":{ # if x is table/list/record
+
+			#shallow copy
+			y := copy(x) 
+
+			#recursive call on each element
+			every k := key(x) do y[k] := deepcopy(x[k])
+		}
+
+		"set":{
+			y := set()
+			every insert(y, deepcopy(!x))
+		}
+		default: return x
+	}
+	return y
+end

@@ -1,0 +1,47 @@
+# n-Queens example
+
+link options
+global solution, n
+
+procedure main(args)
+	local i, opts
+
+	opts := options(args, "n+")
+	n := \opts["n"] | 6
+	if n <= 0 then stop("-n needs a positive numeric parameter")
+
+	solution := list(n) # a list of column solutions
+	write(n, "-Queens:")
+	every q(1) # start by placeing queen in first column
+
+end
+
+procedure q(c)
+	local r 
+	static up, down, rows
+	initial{
+		up := list(2*n-1, 0)
+		down := list(2*n-1, 0)
+		rows := list(n, 0)
+	}
+	every 0 = rows[r := 1 to n] = up[n + r - c] = down[r + c - 1] & rows[r] <- up[n + r - c] <- down[r + c - 1] <- 1 do {
+		solution[c] := r #record placement
+		if c = n then show()
+		else q(c + 1)
+	}
+end
+
+procedure show()
+	static count, line, border
+	initial {
+		count := 0
+		line := repl("| ",n) || "|"
+		border := repl("----",n) || "-"
+	}
+	write("solution: ", count +:= 1, "\n ", border)
+	every line[4*(!solution - 1) + 3] <- "Q" do {
+		write(" ", line, "\n ", border)
+	}
+	write()
+end
+

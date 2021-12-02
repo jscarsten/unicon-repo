@@ -1,0 +1,38 @@
+# simple concordance program
+
+procedure getword(s)
+	s ? while tab(upto(&letters)) do {
+		word := tab(many(&letters))
+		suspend word
+	}
+end
+
+
+procedure main(args)
+	(*args = 1) | stop("Need a file")
+	f := open(args[1]) | stop("Couldn't open", args[1])
+	wordlist := table() #hashtable for word counts
+	lineno := 0
+
+	while line := map(read(f)) do {
+		lineno +:= 1
+		every word := getword(line) do 
+			if *word > 3 then{
+				/wordlist[word] := list()
+				put(wordlist[word], lineno)
+			}
+	}
+
+	L := sort(wordlist)
+
+	every l := !L do {
+		writes(l[1], "\t")
+		linelist := ""
+		# Collect line numbers into a string
+
+		every linelist ||:= (!l[2] || ", ")
+		# trim final ", "
+
+		write(linelist[1:-2])
+	}
+end

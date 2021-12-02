@@ -1,0 +1,24 @@
+procedure main(args)
+	C1 := create consumer(args[1])
+	C2 := create producer(C1)
+	@C2
+end
+
+procedure producer(ce)
+	x := 1
+	repeat{
+		val := x^2
+		ret := val @ce | break
+		x +:= 1
+	}
+	@&main
+end
+
+procedure consumer(limit)
+	value := @&source
+	repeat {
+		if value > limit then break
+		if value % 2 = 0 then write(value)
+		value := retval @&source
+	}
+end

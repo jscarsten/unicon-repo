@@ -1,0 +1,5 @@
+procedure main()
+	write("helloworld")
+	write("how are you?")
+	write(7 + 12)
+end
