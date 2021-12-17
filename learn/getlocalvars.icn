@@ -1,0 +1,11 @@
+#doesnt work 
+
+procedure main(argv)
+	program := argv[1] | stop("Usage : ./getkeywords <icon program>")
+
+	Task := load(program) 
+	write("Local Variables:")
+	every lvar := !structure(@Task) do{
+		write(lvar)
+	}
+end

@@ -1,0 +1,15 @@
+link xcodes
+
+procedure main()
+	db := table()
+	db["Ralph"] := "800-USE-ICON"
+	db["Ray"] := "800-4UN-ICON"
+	dbf := open("db.dat", "w")
+	xencode(db, dbf)
+	close(dbf)
+
+	dbf := open("db.dat")
+	db := xdecode(dbf)
+	close(dbf)
+	write(db["Ralph"], " ", db["Ray"])
+end

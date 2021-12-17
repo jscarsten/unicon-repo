@@ -1,0 +1,10 @@
+procedure main(arguments)
+	@load("client", put(arguments, loadlib))
+end
+
+procedure loadlib(s, C)
+	static sharedlib
+	initial sharedlib := table()
+	sharedlib[s] := @load(s)
+	variable(s,C) := sharedlib[s]
+end

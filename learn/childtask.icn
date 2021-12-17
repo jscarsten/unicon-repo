@@ -1,0 +1,5 @@
+procedure main()
+	L := []
+	while put(L,read())
+	return L
+end

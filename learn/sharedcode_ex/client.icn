@@ -1,0 +1,8 @@
+global loadlib
+global calc
+
+procedure main(arguments)
+	if /loadlib then stop("no shared libraries present")
+	loadlib("calc", &current)
+	write(calc())
+end

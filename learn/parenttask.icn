@@ -1,0 +1,5 @@
+procedure main()
+	write("loading child task")
+	L := @load("childtask")
+	while write(pull(L))
+end		

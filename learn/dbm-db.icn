@@ -1,0 +1,5 @@
+procedure main(argv)
+	db := open(argv[1]) | stop("Couldn't open file", argv[1])
+	write(d[argv[2]])
+	close(db)
+end

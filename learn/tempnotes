@@ -1,0 +1,250 @@
+CP into Notes when I can get git repo up to date
+
+Questions:
+	I understand the basic premise of the tasking facilities interface but I am still confused about co-expressions, program state, co-expression state
+
+	childtask and parenttask examples don't seem to work properly
+	seems to be a problem with while pull(L) and while put(L, read()) 
+	on page 84
+
+	Multi-Line Comments?
+
+Determining IP Numbers
+	- given network connection f, image(f) should show the clients IP 
+	  and port that is connected (called peername)
+	- some programs need to know thier own IP numbers, but there may be 
+	  multiple for 1 machine for each network device
+		- sbin/ifconfig outputs a list of local IPs
+		- gethost(n) returns a string wuth the IP num and port used by 
+		  the local machine for a connection n
+	- the number returned from ifconfig or gethost is not what the world 
+	  sees when you connect to the internet
+		- this is because most devices connect through some type of 
+          network address translation 
+        - in order to see what the world sees you have to connect to 
+          another machine and ask them what they see
+Non-blocking Network opens
+	- a server does'nt have to block when waiting for a connection
+	- open(":port", "nl") opens a listener
+		- the file returned os not for reading or writing 
+		- if the listener gets a connection request, select() converts 
+		  it to a normal network connection
+
+UDP
+	- messages are not guaranteed to go through and may not arrive in 
+	  the order they were sent in
+	- cheaper and faster to send then tcp
+	- can be sent using either open()/writes() or send()
+		- servers use open() then read() and write() since its sends and 
+		  receives on the same socker
+		- clients that only send 1 or 2 udps use send()/receive()
+	- open() should be used with "u" mode to indicate udp
+	- receive() constructs a record with the address and the message
+	- ex. 
+		f :=open(":0125", "nua") #open a udp server
+		while r:= receive(f) do{
+		#process message in r.msg
+		....
+
+		send(r.addr, reply)
+		}
+
+Unicon Messaging Facilities
+	- open() with mode "m" establishes a messaging connection
+		- the filename arg to open() for a messaging connection is a URI
+		  (Uniform Resource Indicator)
+		- the URI specifies the protocol, host machine and thing to read
+		  write
+		- ex. 
+			open("mailto:unicon-group", "m", "Reply To: jeffrey@cs.uidaho.edu")
+			#this establishes an smtp connection and sends a header defined by smtp to supply a reply-to field 
+
+		- implemented protocols include HTTP, HTTPS, Finger, SMTP, POP
+
+HTTP/HTTPS
+	- used to read or write to web servers
+	- the contents of the message are ususally HTML text
+	- programs that connect using http can check the status code of a 
+	  failed request to determine the cause
+	- status codes and other http metadata are retrieved by subscripting 
+	  the connection with the header
+		- ex. f1["Status-Code"] would return the code
+			  f1["Lacation"] would return the new location of the file
+	- it is possible to retreive this metadata without getting the 
+	  file itself using the "ms" mode instead of "m"
+
+Tasks
+	- tasks are executing programs in the unicon VM
+	- the root task is created when the interpreter starts and other
+	  tasks are spawned dynamically as needed
+	- unicon programs can use the tasking facilities to launch, load,
+	  and execute other programs all wihtin a single instance of the
+	  unicon interpreter
+	- unicon tasking can be used to load and execute other programs
+	  withing the same interpreter space however they do not provide 
+	  concurrent programming for those programs or provide special support for multiprocessor hardware
+	- co-expressions provide the tasking execution model
+		- c-expression activation serves as the communication mechanism
+	- programs that use the tasking interface can communicate with each 
+	  other without having to use system IPC mechanisms like pipes, or 
+	  external files
+		- in this way tasking provides a communication interface for 
+		  unicon programs that need to have extensive access to each other wihtout relying on system IPC
+	- there are several built in functions and keywords
+	- no new types, declarations or control structures
+	- the functions are extensions of previously existing functions
+	- new definitions that pertain to regions of memory referenced by 
+	  executing programs
+		- namespace : a mapping from a set of program source code 
+		  identifiers to a set of assiciated memory locations.
+			- Icon programs have a global namespace shared across the 
+			  program
+			- Each procedure has it's own static namespace shared by all 
+			  calls to that procedure that consists of the memory locations shared by those calls, and local namespaces private to each of the calls
+	- when a co-expression is created, a local namespaces is 
+	  allocated for that invocation of the procedure and the local variables are placed into the namespace for use by 
+	  subsequent calls
+	- An icon program has a program state that is made up of  
+        the  memory assiciated with the global and local namespaces keywords, and dynamic memory regions
+      - also co-expressions have a co-expression state that has 
+        an evaluation stack that contains the memory used to implemetn one or more of local namespaces 
+      - the main point of all this is that co-expressions SHARE 
+        access to the program state which the can use to communicate 
+  - task starts as a main co-expression with 0 child co-expressions
+  - a main coexpression and the children all share the program state, 
+    which contains global/static namespaces, keywords, and dynamic memory regions
+  - at the source code level tasks are loaded reference and activated
+    solely in terms of one of their member co-expressions 
+    	- this means that tasks are implicit and not excplicitly defined
+  - task creation
+  	- tasks can be created using load()
+  	- ex. load(s, L, f1, f2, f3, i1, i2, i3)
+  	- this ex. loads an icode file specified by the file name s, 
+  	  creates a task for it and returns a co-expression corresponding to the invocation of the procedure main(L)
+  		- default L is an empty list
+  		- unlike command line invocation, using load() allows you 
+  		  to use any data type as arguments to the task, including prodecures, lists, tables, etc
+  		- a task loaded wiht load() is considered a child task
+  	- f1, f2, f3 are files corresponding to &input, &output, &error
+  		- default for these files are the $input, &output, &error  
+  		  of the calling task
+  	- i1, i2, i3 are integer arguments that specifc the memory 
+  	  region sizes for the child tasks block, string and stack memory
+  		- i1, i2 default is 65000, and i3 is 20000
+  		- defaults can be changed by the environment vars BLKSIZE, 
+  		  STRSIZE, MSTKSIZE
+  - Running other tasks
+  	- a task created by load() is no different than any other
+  	  co-expression, @ will start executingthe childs main procedure
+  	- the child will run until it completes or invokes &source, or 
+  	  suspends
+  		- *** remember &source will activate the parent 
+  		  co-expression ***
+  - Data Access
+  	- every task has a seperate program state but they all share 
+  	  the same memory space
+  	- this allows them to share data
+  	- values can be shared between tasks through main()'s argument 
+  	  list
+  		- this is possible if you use co-expression activation, the
+  		  argument list , or by using event monitoring used in chapter 10
+ 	- Access Through Task Argument Lists
+ 		- a program can take its argument to be an icon rpgram to load and 
+ 		  execute as a child
+ 		- this is acheived in a similar way to the pipe feature in bash
+ 		- this technique can be used to pass entire data structures and 
+ 		  icon types from program to program without having to encode them 
+	- Inter-task Access Functions
+		- functions that provide inter-task access
+			- variable() : takes a coexpression value as an optional second
+			  argment, which denotes the task from which to fetch the variable from
+				- useful for retriving variables from another task for either 
+				  reassignment or reading
+			- cofail(C) transmit failure to C
+			- fieldnames(r) generate fieldnames of record r
+			- globalnames(C) generate C's global variables
+			- keywords(s,C) prodces keword s in C
+			- ..., etc, table on page 85
+		- particularly useful for program execution monitoring 
+	- Shared icode libraries
+		- programs written for the multi-tasking envrionment are more
+		  efficient, modular, and make better use of space
+		- code sharing can be implemented using data sharing
+		- programs running on a single instance of the interpreter can 
+		  share code easily unless the code makes modifications to global variables in the calling tasks program state
+			- in this case you must be careful to explicitly refernce the 
+			  calling tasks state
+	- Loading shared code 
+		- lets say a series of applications need to use the Icon program 
+		  library (IPL) functions
+		- the IPL library need only to be loaded once, after they can be 
+		  shared among the applications
+		- in order to share code from a loaded task there are 2 requirements
+			- the shared code must be loaded
+			- the client tasks must be able to dynamically link shared 
+			  routines into their generated code
+		- in order to introduce a shared Icon procedure into the namespace, 
+		  a global variable must be declared that has the same name as the namespace
+
+Databases
+	- different kinds of databases are appropriate depending on how much 
+	  information needs to be stored as well as what kinds of access needs to be supported
+	- Memory-based Databases
+		- if a databased can fit in memory, it allows you to avoid the disk
+		  and make the information access more efficient
+		- xcodes procedures convert structuresto strings and store them to files
+	- DMB Databases
+		- DMB : database manager, UNIX databases
+		- the DMB functions maintain key value associations on the disk
+			- similar to table data type
+		- superset libraries of DMB are NDMB and GDMB <- used by unicon
+		- accessed with open() with "d" mode for rw or "dr" for read only
+		- manipulated using table operations
+		- closed with close()
+		- best for databases with simple organization
+		- a limitation of DBM is that they are string bases
+			- ex. tables can have a key 1 and a key "1" but this is
+			  impossoible with DBM
+			- cannot use structures like records or lists as elements
+				- although you can use xencode() and xdecode() if you really  
+				  need to
+	- SQL Databases
+		- better for complex databases not organized around single keys
+		- Structured Queury Language
+		- can contain multiple tables accessed by walking through a set of
+		  results to some queury
+		- a database is a collection of tables, where each table is a
+		  collection or rows, and rows contain informtaion of different types in a set called columns 
+		- 2 ways to do stuff in SQL in unicon
+			- using unicon operations
+			- using SQL statements
+		- SQL statements
+			- CREATE TABLE
+				- create table addresses(name varchar(40), address varchar(40), 
+				  phone varchar(15))
+				- name is the primary key in the table addresses
+			- SELECT
+				- determines the data set being operated on
+			- INSERT
+				- adds new rows to a table
+				- ex.
+					insert into addresses(name, address, phone) values('Nick K', '1 Evil Empire', '(123)456-7890')
+					insert into addresses(name, address, phone) values('Vic T', '23 Frozen Glade', '(900)888-8888')
+			- UPDATE/DELETE	
+				- can modify or delete sets of rows that match a certain 
+				  criteria 
+				- ex. 
+					update addresses set address = '666 RTH Issaquah' where 
+				  name = 'Nick K'
+				  delete from addresses where name = 'Vic T'
+			- for simple database tasks you can use the unicon builtin 
+			  facilities, but for complex operations the best solution is to formulate your own SQL commands
+		- Database architectures adn ODBC
+
+
+
+
+
+
+
+
