@@ -9,6 +9,15 @@ Questions:
 
 	Multi-Line Comments?
 
+  the line of code...
+  until L := trylock(L1 | L2)
+  is a loop which tries to acquire a mutex
+  how is this different/better than a spinlock (busy wait)
+
+  extra files creates when compiling programs with classes
+
+
+
 Determining IP Numbers
 	- given network connection f, image(f) should show the clients IP 
 	  and port that is connected (called peername)
@@ -239,12 +248,403 @@ Databases
 				  delete from addresses where name = 'Vic T'
 			- for simple database tasks you can use the unicon builtin 
 			  facilities, but for complex operations the best solution is to formulate your own SQL commands
-		- Database architectures adn ODBC
+		- Database architectures and ODBC
 
+Threads
+	- threads are an extension of the co-expresiion class and the system 
+	  interface
+	- threads in unicon are like asynchronous co-expressions
+	- each thread has it's own program coutner stack and cput registers
+	- but each thread in a program will share the same memory, open 
+	  files, etc.
+	- each thread has an entry point, ususally a procedure, but it can be 
+	  any expression
+	- threads never return they just terminate, while the others continue
+		- exception is the main thread, the whole program ends when the 
+		  main thread terminates
+	- unicon threads can be created in 2 ways
+		- using the thread reserved word
+		- using spawn()
+		- difference between these is the separation between creating a  
+		  thread and running it
+		- thread reserved word creates a thread and runs it while spawn() 
+		  takes an already existing co-expression and creates a thread for it 
+	- threads and co-expressions can be used outside of the scope   
+	  where they were created
+  	- copies of local variables in different threads can be though of
+  	  as parameters passed to a procedure
+  		- this is true of local variables and immutable types
+  		- global variables and mutable types can be shared among threads 
+  		  such as in lists
+  - passing data to threads as arguments is easy
+   	- you just create a thread from a procedure and pass the 
+   	  arguments as paramters to the procedure 
+  - thread safe code 
+  	- each thread's data needs to be completely independent
+      from other threads 
+  	- avoid or rewrite any procedures or libraries that use 
+  	  global or static variables
+  	- use s synchronization mechanism if necessary
+  - thread synchronization
+  	- spinlocks (wait() or global variable flag)
+  		- occupies a CPU core to keep spinning 
+  	- mutexlocks
+  		- a mutex object is created with mutex()
+  		- the returned object can be locked and unlocked using 
+  		  lock() and unlock()
+  		- the more mutex locks you have, the slower the program
+  		  will run, especially if the critical section is long
+  		- special syntax
+  			- critical mtx: expr
 
+  			  is equivalent to ...
 
+  			  lock(mtx)
+  			  expr
+  			  unlock(mtx)
+  			- if there is a return in the expr, you must unlock the 
+  			  lock manually before you return the expr
+  		- trylock() is an laternative non-blocking function for 
+  		  locking
+  		  - if the thread cannot acquire the mutex immediately the 
+  		    function fails
+  		 	- most often used inside an if statement
+  		- initial clauses are thread safe
+  			- can use them to create a new mutex object
+  		- in unicon thread-unsafe data structures can be protected 
+  		  by turning on it's mutex attribute
+  			- the data structure will lock/unlock implicitly
+  			- initialize a thread safe structure with ...
+  			  Structure := mutex(<init structure>)
+  			- Use critical <structure>: expr, for non-atmoic 
+  			  operations
+  		- you can do thread safe concurrent assignment to a global
+  		  variable only if the type of the global variable never changes, applies for shorts/longs as well
+  	- Condition Variables
+  		- condition variables offer thread blocking/unblocking that
+  		  is not related to data sharing like with mutexes
+  		- instead condition variables can wait for an event to
+  		  happen before blocking/unblocking
+  		- condvar() returns a condition variable object that can be 
+  		  used with wait() and signal()
+  		- wait(cv) blocks the current thread on the condition 
+  		  varaible cv
+  		- the thread blocks until anther thread uses signal(cv)
+  		  to wake it up
+  		- the conditional variable must always be associated with a 
+  		  mutex
+  			- this means that the wait() function must always be  
+  			  protected by a mutex
+  		- unicon has built in mutexes for conditional variables
+  			- conditional variables can be used with
+  			  lock()/unlock()/critical clause
+  		- the condition or test that is the cause of the wait() on
+  		  a conditional variable must also be protected with a mutex
+  			- ex. lock(cv)
+  							if x = 0 then wait(cv)
+  						unlock(cv)
 
+  						or...
 
+  						critical cv: if x = 0 then wait(cv)
 
+  						or the best way...
 
+  						critical cv: while x = 0 then wait(cv)
+  	- Thread Communication 
+  		- co-expressions traditionally communicate using the @  
+  		  operator
+  			- x@C2 allows a co-expression C1 to communicate with
+  			  another co-expression C2 passing a value x
+  		- threads take this idea to another level 
+  			- 4 new operators
+  				- @>, @>>, @<, @<<
+  				- send, blocking send, receive, blocking receive
+  			- each thread maintains 2 message queues called inbox and 
+  			  outbox
+  			- Attrib() can be used to access or change the queue
+  			  attributes
+  				- Attrib(handle,attribcode, value, attribcode, value,
+  				  ...)
+  				- integer codes used by this fucntion are cotnained in 
+  				  threadh.icn (import threads)
+  				- when values are ommited Attrib() returns attribute
+  				  values
+  			- to synchronize message sending/receiving the blocking 
+  			  send and receive operators are used
+  				- instead of failing when they fail, these operators
+						wait until the operation succeeds 
+					- useful when the amount of messages sent may exceed 
+					  the size of the message queue
+		- Private Communication channels
+			- inbox & outbox queues are visible to all threads at all 
+			  times
+			- sometimes 2 threads need to communicate without worrying 
+			  about other messages sending or receiveing messages from their queues
+			- channel() function opens a channel between 2 threads
+				- need to use import threads
+				- returns a list representing a bidirectional channel
+				- takes one parameter, the thread that it wants to 
+				  communicate with
+				- uses the 4 communication operators
+		- Thread Pool
+			- included in the threads package
+			- 4 procedures
+				- MakePool(n) -> create a pool of n worker threads
+					- default n is 2 + the number of processors
+				- Dispatch(proc, params) -> Queue a task to be executed 
+				  by a thread from the pool
+						- if a thread is available the procedure will be
+						  called immediately, otherwise it will be called when there is a thread available
+				- isIdle() -> Succeeds if no workers are active and there 
+				  are no tasks in the queue
+				- ClosePool() Shuts down the pool after the remaining tasks have finished
 
+Execution Monitoring
+	- execution monitoring is when the user can execute a program
+	  under the observation of one or more monitoring systems
+	- terminology
+		- dynamic loading : the ability to load multiple programs
+		  into a shares execution environment  supports monitor access to target program data
+		- synchronous execution : the monitor and target execute
+		  independently, but not concurrently. this allows the monitor to control the target program execution using a simple programming model. co-expressions are used to supprot the monitor-target relationship
+		- high level instrumentation : info about program execution 
+		  is available in the langauge runtime system
+		- events : an event is the smallest unit of execution 
+		  behavior that is observable by a monitor
+		- event codes and values : from the monitor's perspective an
+		  event is made of 2 components, and event code and an event value. the code is genrally a 1 character string describing the event 
+
+Object Oriented Programming
+	- encapsulation : the isolation of some data representation and
+	  the code that manipulates it
+		- all of the source code that could affect the data structure
+		  is present with the data's definition
+		- methods are the public interface between the code in the 
+		  object and outside the object
+	- inheritance : code is shared by related data structures 
+	  through a concept called inheritance
+	  - when writing code for a data structure that is similar to
+	    an already existing data structure, all you need to do is specify the differences between the two
+	  - inheritance is useful when a data structure may
+	    need an extension with new variables or operations but the old and new structures are both needed by the application
+	  - the collection of all the inheritance relations defines a
+	    directed, but not necessarily acyclic graph
+	- polymorphism : when executing code containing objects, the 
+	  code may invoke any encapsulated facilities within that object regardless whether that facility belongs to the original class or the inheriting class
+		- this is possible through encapsulation of all object code
+		  within the declared object
+		- algorithms called generic algorithms use polymorphism to 
+		  act upon different object types
+		- polymorphic code can execute an operation on any object 
+		  that implements the usage of the operation in the class 
+	- Objects in Program design
+		- objects can be used to model the program domain
+		- the objects and the relationships between them give
+		  fundamental information that organizes the rest of the program design
+		- UML
+	- Declaring classes
+		- syntax...
+			class foo(attr1, attr2, attr3, ...)
+				# procedures (methods to access class foo objects)
+
+				# code to init class foo objects (constructor)
+			end
+		- methods are procedures that manipulate class objects
+			- define an interface between the object and the executing 
+			  code
+			- syntax...
+				method bar(param1, param2, param3, ...)
+					# code that may access fields of class foo object
+				end
+			- all methods have access to the implicit variable self (a 
+			  record holding the attributes)
+	- Object Instances and Initially Sections
+		- object instances are created using a constructor procedure 
+		  with the same name as the class
+		- fields of an object do not necesarily have to be 
+		  initialized with a parameter passed to the constructor
+			- therefore class decalration includes an initially section
+			- ex.
+				class taque(L, T)
+					# methods
+
+					initially 
+						L := []
+						T := table()
+				end
+			- each class's default constructor procedure works like a 
+			  records, the initially section acts like a traditional constructor in java
+			- you can pass arguments to the initially constructor like 
+			  initially()
+			- you can use initially with no parameters to utilize the 
+			  default constructor procedure while also implicitly initializing other fields not initialized by the 
+			  constructor
+				- this can be awkward sometimes so there exists an 
+				  alternative
+			- when an initially section includes a parameter list, it
+			  frees the constructor from assigning fields in the order that they appear
+	- Object Invocation
+		- object invokation is a combination of a procedure call and 
+		  a record access
+		  - ex. object.methodname(arguments)
+		- methods can also be called using proceudre calls
+			- x.method(arguments) --> Class_method(x, arguments)
+		- you should not access an objects fields direcly using the .
+		  operator, it is better practice to use getters and setters
+		- the usage of self is implicit to methods so you rarely have 
+		  to explicitly use it
+
+Inheritance and Associations
+	- some classes are very similar to others
+	- inheritance is a way to reduce code repetition
+	- a class defined in terms of another class is a subclass
+	- a class from which a subclass is defined is called a
+	  superclass
+	- an object of a subclass can be manipulated in the same way as
+	  if it were an object of the superclass
+		- similar classes can now share code that manipulates thier 
+		  fields
+	- syntax of a subclass ...
+			class classname superclasses (attributes)
+				methods
+				initially section
+			end
+		- the superclasses part is a list of classnames seperated by 
+		  colons
+	- Unicon has a unique OOP perspective when it comes to 	
+	  inheritance
+	 	- in unicon, inheritance is seen as the additon of superclass
+	 	  elemets to the sublclass
+	 	- in traditional OOP, subclasses are often seen as an 
+	 	  augmented instance of the superclass
+		- this difference allows unicon to do cool stuff like define
+		  classes as subclasses of each other
+	- invoking superclass operations
+		- somtimes subclasses can have a method of the same name as a 
+		  method defined in the superclass (called overriding)
+		- the default behavior is to invoke the subclass method
+		- in order to invoke the superclass method you need to say...
+			object@superclass.method(paramters)
+		- you can do this with initially sections too
+	- superclass cycles and equivalence
+		- many times there are several ways to represent an abstract 
+		  type
+		- ex. cartesian vs radial coordinates
+		- we can define two classes that are superclasses of each 
+		  other
+		- the superclass decalrations make the two types equivalent
+		  names for the same tpye of object
+		- after inheritance the objects from either class will have 
+		  fields x,y,d,r and they will both support the same 
+		  operations
+		- often times the different paramters and thier ordering will 
+		  distinguish the difference and reflect different POVs
+		- although each object will support the same operations the
+      methods invoked may be different depending on which constructor was used
+    - if a class inherits methods from an equivalent class, it is
+      responsible for initializing the fields which that methods uses in it's constructor
+  - Associations
+  	- association : a relationship that occurs between objects at 
+  	  runtime
+  	- an instance of an association is called a link
+	  - Aggregation
+	  	- an object made up of a composition of multiple other objects
+	  	- ex. a dictionary is made of many dictionaryentry objects
+	 	- User-defined associations
+	 		- custom associations defined by the application designer
+	 	- associations are not completely specified until the details
+	 	  are determined during program design
+	 	- Multiplicity : a number or range that indicates how many
+	 	  instances of a class are involved in the links for an association
+	 	- Role : a name given to participants in an association to 
+	 	  distinguish them
+	 	- Qualifier : a key value used to distinguishes instances in 
+	 	  a link in lieu of a large multiplicity
+	 	- implementation
+	 		- sometimes an association can be implemented by writing a
+	 		  class whose instances are links between related classes objects
+	 		- other times associations can be implemented by adding an
+	 		  attribute to a class that contains a reference to another object
+	 		- in all cases implementation will involve adding new fields
+	 		- usually an association that has a qualifier is
+	 		  implemented with a table
+
+Writing Large Programs
+	- Abstract Classes
+		- most classes denote a data type 
+		- an abstract type is used to denote a general catagory of
+		  objects of which there are no instances
+		- abstract classes are used by defining subclasses which
+		  actually do have instances
+		- you can add the abstract header to methods in order to make
+		  sure that the inheriting classes implement the method
+	- Design Patterns
+		- known successful designs that can be reused in large 
+		  software applications
+		- Singleton : a class of which exactly one instance is 
+		  required
+		- Proxy : a stand in for an object which calls the objects 
+		  corresponding method each time one of it's methods are invoked
+		  - proxies are used cannot or should not be invoked directly
+		  - if the object is on a remote machine (server), a proxy
+		    can be used to take care of the network comminucation and hide the location of the object from the clients
+		  - or if the object is large, a proxy can be used to ensure
+		    that the object is not loaded into memory unless one of it's operations is invoked
+		- Chain of Responsiblity
+			- similar to proxy
+			- on object delegates one or more of it's methods to
+			  another object
+			- difference is that a proxy forwards all method
+			  invokations to the real object, while in a CoR the object may handle some methods locally, and only delegate certain methods to the next ibject in the chain
+			- also CoRs are often made up of multiple linked objects
+			  that jointly provide a set of methods
+		- Visitor
+			- in generic algorithms it is common to have a data
+			  structure that needs to be traversed where each element requires some computation
+			- the visitor seperates the traversal from the operation
+			  performed (visitation)
+			- the visitor will implement some methods to do visitation
+			  on elements in the structure and the elements will invoke the visitor methods
+		- Packages
+			- in large programs the global namespaces become crowded
+			- every global decalration outside the package is invisible
+			- package declaration : specifies that all gloabl symbols 
+			  within a source file belongs to a package
+			  - similar to link declaration
+			  - ex. 
+			  	package foo 
+			  	# declares the file as a package foo
+
+			  	or 
+
+			  	package "/usr/local/lib/icon/foo" 
+			  	# specifies the package with a string filename
+			- the import declaration is used to access symbols within 
+			  a package
+				- ex. 
+					import foo
+			- explicit package references
+				- sometimes multiple packages may define the same symbol
+				- in this case you can explicitly refernce which package 
+				  you'd like to access
+				  - ex. packagename1::foobar()
+				  			packagename2::foobar()
+				  			::foobar() # calls gloabl foobar()
+				  - you can also use :: to call a global procedure from  
+				    within a class that has a method with the same name
+				  - ex. 
+				  		class abc(x)
+				  			method write()
+				  				::write("abc x = ", x)
+				  			end
+				  		end
+			- compilation order and unidep tool
+				- if possible compile the package before the program that
+				  uses it
+				- if there are multiple source files belonging to the
+				  same package, the order in whcih they are compiled is significant
+				- you can use unidep to handle this confusion for you
+					- usage : unidep file1.icn file2.icn file3.icn ...
+					- unidep will generate a makefile that you can use to
+					  compile the package

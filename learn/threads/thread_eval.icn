@@ -1,0 +1,10 @@
+procedure main()
+	local L
+	L:= [20,10,0]
+	write("Main thread: L[1]", L[1], ", L[2]=", L[2], ", L[3]=", L[3])
+	thread (L[1]:=100) & write("Thread 1: L[1]=", L[1])
+	thread (L[2]:=200) & write("Thread 2: L[2]=", L[2])
+	thread (L[3]:=L[1]+L[2]) & write("Thread 3: L[3]=", L[3])
+	delay(1000)
+	write("Main Thread: L[1]=", L[1], ", L[2]=", L[2], ", L[3]=", L[3])
+end

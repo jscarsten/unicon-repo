@@ -1,0 +1,79 @@
+class buffer(filename, text, buffer)
+	method read()
+		f := open(filename) | fail
+		text := []
+		index := 1
+		every put(text ,!f)
+		close(f)
+		return
+	end
+
+	initially 
+		if \filename then read()
+end
+
+class buftable : buffer()
+	method read()
+		self.buffer.read()
+		tmp := table()
+		every line := !text do
+			line ? {tmp[tab(many(&letters))] := line | fail}
+		text := tmp
+		return
+	end
+
+	method index(s)
+		return text[s]
+	end
+end
+
+class bibliography : buftable()
+end
+
+class spellChecker : buftable(parent)
+	method spell(s)
+		return \text[s] | (\parent).spell()
+	end
+end
+
+class dictionaryentry(word, partofspeech, etymology, definition)
+	# decode a dictionary entry into its components
+	method decode(s)
+		s ? {
+			word := tab(upto(";"))
+			move(1)
+			partofspeech := tab(upto(";"))
+			move(1)
+			etymology := tab(upto(";"))
+			move(1)
+			definition := tab(0)
+		}
+	end
+
+	# encode an entry into a string
+	method encode()
+		return word || ";" || partofspeech || ";" || etymology || ";" || definition
+	end
+
+	initially
+		if /partofspeech then {
+			# constructor was called with single string argument
+			decode(string)
+		}
+end
+
+class dictionary : buftable()
+	method read()
+		self.buffer.read()
+		tmp := table
+		every line := !text do
+			line ? {tmp[tab(many(&letters))] := dictionaryentry(line) | fail}
+		text := tmp
+	end
+
+	method write()
+		f := open(filename, "w") | fail
+		every write(f, (!text).encode)
+	end
+
+end

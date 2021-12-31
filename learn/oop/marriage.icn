@@ -1,0 +1,13 @@
+class Man(wife)
+	method Marry(w)
+		wife := w
+		if not (self === w.husband) then w.Marry self
+	end
+end
+
+class Woman(husband)
+	method Marry(m)
+		husband := m
+		if not (self === m.wife) then m.Marry(self)
+	end
+end

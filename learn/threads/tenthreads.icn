@@ -1,0 +1,11 @@
+procedure main()
+	L := []
+
+	every i := !10 do {
+	put(L,thread write("Hello world! I am thread: ", i))
+	}
+
+	every wait(!L)
+
+	write("main done")
+end
