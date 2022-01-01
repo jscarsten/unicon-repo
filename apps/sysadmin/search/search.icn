@@ -1,0 +1,44 @@
+#
+# search.icn
+# 
+# Search for files whose (entire) names match a pattern given as a 
+# regular expression
+#
+# Usage: ./search <pattern> [dirs]
+
+link regexp
+
+procedure main(args)
+	(*args > 0) | stop("Usage: ./search <pattern> [dirs]")
+	pattern := pop(args)
+	if *args = 0 then findfile(".", pattern)
+	else
+		every dir := !args do findfile(dir, pattern)
+	exit(0)
+end
+
+procedure findfile(dir, pattern)
+	local d, f, s
+	static pat 
+	initial pat := RePat(pattern) | stop("Invalid Pattern ", image(pattern))
+
+	d := open(dir) | {
+		write(&errout, "Couldn't access", dir, " ", &errortext)
+		return
+	}
+
+	while filename := read(d) do {
+		if filename == ("." | "..") then next
+		f := dir || "/" || filename
+		s := stat(f) | {
+			write(&errout, "Couldn't stat ", f, " ", &errortext)
+			next
+		}
+
+		filename ? if tab(ReMatch(pat)) & pos(0) then write(f) 
+
+		if s.mode[1] == "d" then findfile(f)
+	}
+	close(d)
+	close(d)
+end

@@ -1,0 +1,9 @@
+#this program fetches some file over http/https when supplied with a URI as an argument and saves it locally
+
+link basename
+
+procedure main(argv)
+	f1 := open(argv[1], "m")
+	f2 := open(basename(argv[1], "w"))
+	while write(f2, read(f1))
+end

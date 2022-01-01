@@ -1,0 +1,19 @@
+import threads
+
+procedure main()
+	p := thread producer()
+	c := thread consumer(p)
+	c @> p 
+	every wait(c | p)
+end
+
+procedure producer()
+	c := <<@
+	chC := channel(c)
+	every !10 @> chC
+end
+
+procedure consumer(p)
+	chP := channel(p)
+	every !10 do write(<<@chP)
+end 

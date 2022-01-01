@@ -1,0 +1,6 @@
+procedure main(argv)
+	n := open(argv[1], "n") | stop("Couldn't connect to ", argv[			1]|"missing host")
+	write("connected to: ", image(n))
+	write(image(n)[6:-1])
+	write("using: ", gethost(n))
+end

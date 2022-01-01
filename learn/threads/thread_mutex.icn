@@ -1,0 +1,18 @@
+global x
+
+procedure main()
+	section := mutex()
+	x := 0
+
+	t1 := thread incx(section)
+	t2 := thread incx(section)
+	every wait(t1 | t2)
+	write ("x = ", x)
+end
+
+procedure incx(csection)
+	#lock(csection)
+	#x +:= 1
+	#unlock(csection)
+	critical csection: x +:= 1
+end	

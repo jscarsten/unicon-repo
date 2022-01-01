@@ -1,0 +1,23 @@
+procedure main()
+	L := []
+	mtx := mutex()
+	cv := condvar(mtx)
+	p := thread produce(L, cv)
+	c := thread consume(L, cv)
+	every wait(p | c)
+end
+
+procedure produce(L, cv)
+	every i := !10 do {
+		critical cv: put(L, i)
+		if *L = 1 then signal(cv)
+	}
+end
+
+procedure consume(L,cv)
+	i := 0
+	while i < 10 do {
+		if *L = 0 then critical cv: until *L > 0 do wait(cv)
+		if x := get(L) then i +:= 1 & write(x)
+	}
+end

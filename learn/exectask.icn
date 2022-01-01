@@ -1,0 +1,5 @@
+# it loads the first argument as an icon program, then sorts the remaining elements in argv and passes them as arguments to the child task
+
+procedure main(argv)
+	@load(pop(argv), sort(argv))
+end

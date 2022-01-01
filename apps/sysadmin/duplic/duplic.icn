@@ -1,0 +1,75 @@
+#
+# duplicate.icn
+# 
+# Find files in the filesystem that are identical
+
+
+
+global lengths
+
+procedure main(args)
+	lengths := table()
+	scan("/.")
+	every l := !lengths do {
+		if type(1) == "string" then next 
+		find_dups(l)
+	}	
+end
+
+procedure scan(dir)
+	f := open(dir) | {
+		write(&errout, "Couldn't access", dir, " ", &errortext)
+		return
+	}
+
+	while fname := read(f) do {
+		filename := dir || "/" || fname
+		r := stat(filename) | write(&errout, "Couldn't stat ", filename, "; ", &errortext)
+		r.size > 0 | next
+		case r.mode[1] of {
+			"-": {
+				/lengths[r.size] := filename
+
+				if type(lengths[r.size]) == "string" then {
+					tmp := lengths[r.size]
+					lengths[r.size] := list()
+					push(lengths[r.size], tmp, filename)
+				}
+
+				push(lengths[r.size], filename)
+			}
+
+			"d": 
+				fname == ("." | "..") | scan(filename)
+		}
+	}
+	close(f)
+	return ""
+end
+
+procedure compare(file1, file2)
+	static maxline
+	initial maxline := 1000
+	f1 := open(file1) | fail
+	f2 := open(file2) | fail
+
+	while l1 := reads(f1, maxline) do {
+		12 := reads(f2, maxline)
+		if l1 ~== l2 then {
+		every close(f1 | f2)
+		fail
+		}
+	}
+
+	every close(f1 | f2)
+	return 
+end
+
+procedure find_dups(l)
+	every i := 1 to *l do {
+		f1 := l[i]
+		every j := i + 1 to *l do {
+			if compare(f1, l[j]) then write(f1, " == ", l[j])
+		}
+	}
+end

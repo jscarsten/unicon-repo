@@ -1,0 +1,15 @@
+procedure main()
+	L1 := [1,2,3]
+	L2 := [4,5,6]
+	L3 := [7,7,9]
+	t1 := thread sumlist(1, L1)
+	t2 := thread sumlist(2, L2)
+	t3 := thread sumlist(3, L3)
+	every wait(t1 | t2 | t3)
+end
+
+procedure sumlist(id, L)
+	i := 0
+	every i +:= !L
+	write("Thread id = ", id, " result = ", i)
+end

@@ -1,0 +1,14 @@
+procedure main()
+	p := thread producer()
+	c := thread consumer(p)
+	every wait(p | c)
+end
+
+procedure producer()
+	every !10 @>
+end 
+
+procedure consumer(p)
+	# get exactly 10 values from p, block if necessary
+	every !10 do write(<<@ p)
+end	

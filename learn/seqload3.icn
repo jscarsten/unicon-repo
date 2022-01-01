@@ -1,0 +1,9 @@
+# launches each program in arguments as a task and sets their global 
+# variable "Parent" to the parents &main co-expression 
+
+procedure main(arguments)
+	every arg := !arguments do{
+		Task := load(arg)
+		variable("Parent", Task) := &main
+		@Task
+	}

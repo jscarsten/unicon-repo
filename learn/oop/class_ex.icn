@@ -1,0 +1,13 @@
+class C(a, b, c)
+	initially(x)
+		a := ["vital, "urgent", "gentrified"]
+		b := promptedread("tell me about " || x)
+		c := x
+	end
+...
+...
+end
+
+procdure main()
+	v := C("Greenwich Village")
+end 

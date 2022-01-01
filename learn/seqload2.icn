@@ -1,0 +1,8 @@
+# takes a list of icon programs as its argument and launches a task for 
+# each of them. whatever is returned from one program is passed to the 
+# next as it's argument, Similar to a pipe
+
+procedure main(argv)
+	every program := !arguments do
+		L := @load(program, L)
+end

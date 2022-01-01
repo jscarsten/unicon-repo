@@ -1,0 +1,9 @@
+# main exports a reference to shared procedure calc() 
+
+procedure calc()
+	write("doing a calc")
+end
+
+procedure main()
+	return calc
+end

@@ -1,0 +1,8 @@
+procedure main()
+	thread write("Hello World")
+	# same as ...
+	# spawn(create write("hello world")) 
+	# 
+	# co := create write("Hello World")
+	# spawn(co)
+end
