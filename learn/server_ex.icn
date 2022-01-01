@@ -1,0 +1,13 @@
+# listens on port 1888
+
+procedure main()
+	# open will block until a client connects, returns a file
+	while f := open(":1888", "na") do { 
+		# server launches seperate process for each request
+		# file representing connection is passed to "myserverd" as stdin/stdout
+		system("myserverd -servicerequest &", f, f)
+		close(f)
+	}
+
+	(&errno = 0) | stop("Open failed: ", &errortext)
+end

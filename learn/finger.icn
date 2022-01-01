@@ -1,0 +1,14 @@
+procedure main(argv)
+	local fserv := getserv("finger") | stop("Couldn't get service :", &errortext)
+	name := argv[1]
+	host := ""
+	argv[1] ? {
+		name := tab(find("@")) & = "@" & host := tab(0)
+	}
+
+	if *host > 0 then write("[", host, "]")
+	f := open(host || ":" || fserv.port, "n") | stop("Couldn't open connection: ", &errortext)
+
+	write(f,name) | stop("Couldn't write: ", &errortext)
+	while write(read(f))
+end

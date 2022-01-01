@@ -1,0 +1,20 @@
+link printf
+
+procedure main(args)
+	every name := !args do {
+		f := open(name) | stop(&errortext, name)
+		L := list()
+		while line := read(f) do
+			push(L, line)
+
+		every write(format(stat(n := !sort(L)), n))
+	}
+end
+
+procedure format(p, name)
+	s := sprintf("%-7d %-5d %s %-4d %-9d %-9d %-8d %s %s", p.ino, p.blocks, p.mode, p.nlink, p.uid, p.gid, p.size, ctime(p.mtime)[5:17], name)
+
+	if p.mode[1] == "I" then
+		s ||:= "->" || \(p.symlink)
+	return s
+end

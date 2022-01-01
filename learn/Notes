@@ -9,6 +9,7 @@ QUESTIONS :
 	Pg 56 if s had the value "foo" then s(x) -> foo(x)?
 	pg 60 parallel evaluation ex at top
 	how does map() work?
+
 		
 
 Goal-Directed Evaluation
@@ -447,6 +448,241 @@ Advanced Language Features
 		- WDelay(t) : waits until t milliseconds have passed
 		- WDone() : waits fro user to dismiss the output window by pressing "q" and then
 		  terminates the program and closes the window
+
+System Interface
+	- Files and Directories
+		- read("myfile", "rw") and write(filename, "test to be written")
+		- default mode for read is "r"
+		- another way to read lines is with unary !
+			- ex. every put(L, !file)
+					places lines of file into list L
+		- reads(f, i) reads up to i characters
+		- writes(f, s, ...) writes strings to a file
+		- close(f) closes a file
+		- std files &input, &output, &errout
+		- chdir() with no arguments returns cwd
+		- chdir(dirname) sets cwd to dirname
+		- open(dirname) opens a directory and reads its contents
+			- directories cannot be opened for writing
+			- every read() from a directory returns the name of a file in 
+			- every write(!open(".")) writes the name of the files in the current 
+			  directory
+		- mkdir(s) creates a directory
+			- optional second argument specifies permissions
+		- files/directories can be renamed with rename(s1, s2)
+		- remove(s) will delete a file or directory
+	- Obtaining File Metadata
+		- owner, size, access rights, etc
+		- stat() returns this info in the form of a record
+	- Controlling File Ownership and Access
+		- chown(fname, user, group) changes the ownership of a file
+		- chmod(fname, mode) changes the files access rights
+			- mode is either a nine letter "rwxrwxrwx" string or 3 digit octal code
+		- these functions only succeed for certain users
+		- umask is a variable that tells the system what the access rights for newly 
+		  created files/directories will be
+		  	- umask("rwxr-xr-x")
+		  	- overwrite umask with mkdir(dirname, mode)
+	- File Locks
+		- files can be locked while updating info so that no other processes can read 
+		  or write to it
+		- flock(filename, "x") creates a lock and subsequent calls by other processes 
+		  will be blocked until the lock is released
+			- "x" argument indicates an exclusive lock, which should be used when 
+			  writing
+			  	- an exclusive lock means that no other processes can be locked
+			- "s" argument creates a shared lock which should be used when reading
+				- a shared lock lets other processes continue reading while locked
+	- Process Control
+		- similar to C POSIX interface
+		- include file posix.icn for constants used by certain functions
+			- $include "posix.icn"
+		- signals
+			- an asynchronous message sent to a process either by the system or by 
+			  another process
+			- a process can handle a signal in two ways
+				- let the system handle it in the default way (often results in 
+				  process termination)
+				- define a function to handle the signal (signal handler)
+			- trap(s, p) traps or ignores signals
+				- s is the string name of the signal
+					- see appendix E
+				- p is the procedure to call when signal is received
+		- Launching programs
+			- best way to start a program is with open() with mode "p" (pipe)
+			- when you use mode "p" the filename argument is instead a command string
+			- piped commands ("p", "pr") let your program read the commands output 
+			- piped commands ("pw") let your program write the commands output
+			- system(x, f1, f2, f3, mode) is another way to run commands
+				- "x" is the command string/list where x[1] is the command and the
+				  other list elements are the arguments
+			- the calling program waits for system() to be returned before continuing
+				- the exception is when the command ends with &, or the mode arg is 
+				  1, or "nowait"
+			- system() takes 3 optional file arguments
+				- redirected stdin, stdout, stderr files for the launched program
+			- system() accepts redirection operators in the command string
+			- pipe() function returns a pair of open files in a list, with the 
+			  property that anything written to the second will be written to the 
+			  first
+				- ex. connect a pipe between 2 processes
+					L := pipe | stop("Couldn't get pipe", &errortext)
+					system("prog1 &",, L[2])
+					system("prog2 &", L[1])
+					close(L[1])
+					close(L[2])
+		- Process Information
+			- getpid() returns pid 
+			- getuid() returns user id
+			- wait() returns a string of the form "pid:status:arg:core" to the parent
+			  when the child process changes from running to exited or terminated
+				- ":core" will be present if the system created a core file for the 
+				  process
+				- status can be "exited", "terminated", or "stopped"
+				- arg is either the exit status, or the signal name
+				- normally wait() is used in a signal handler for the SIGCHLD signal, 
+				  which is sent to the parent when the child changes state
+				- arguments to wait() are the pid of the process to wait for and any  
+				  options
+					- default is to wait for all children
+			- select() system call
+				- sometimes programs need to read data from multiple sources, like 
+				  keyboard and a socket
+				- the problem with read() is that if the input does not exist then 
+				  the program blocks and the other streams cannot be read
+				- select(x1, x2, ..., i) tells the system what files you want to read 
+				  from
+					- when any input from the args becomes available it notifies the 
+					  program
+					- takes files or lists of files as args
+					- returns a list of files on which input is waiting
+					- if you give it an integer i, it waits for i milliseconds and if
+					  no input is available, it returns an empty list
+					- if there is no integer timeout arg, the program waits  
+					  indefinitely
+					- Note: select only requires that 1 char be available in order to 
+					  return it
+				- a primary use for select() is with network programming
+	- Networking
+		- TCP
+			- need to know name of machine (IP address) and the port number
+			- call to open() with mode "n" requests a network connection
+				- arg 1 is the network address (host:port pair and a filename for 
+				  UNIX domain sockets)
+				- If the address has no hostname (starts with ":") the socket is 
+				  opened on the same machine
+				- open(..., "n") opens a file (socket) that can be used in select()
+				- can also be used to open a connection to a tcp server
+			- getserv() returns a record that includes fields for name, alias, and 
+			  port number
+				- the input string is the name of a common protocol
+				- getserv() will translate the string into the port number so you 
+				  dont have to remember
+			- to write a server, we just need to add "a" to the open mode after "n" 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 			 
 		
 
