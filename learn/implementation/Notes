@@ -1,0 +1,186 @@
+Questions
+	Unicon is written in unicon? Does this mean that the translator "unicon" is written in Unicon the language?
+
+	Need some clarity about what a language virtual machine is/does. I have some idea but It would help to be more clear
+
+	In the book it says that programming languages that are the most difficult to implement are also those that differ most from each other. How does the comlexity of the implementation of Unicon/Icon differ from other languages.
+
+	Would you say that easy of programming is inversly proportional to ease of implementation?
+
+	Can you define your own custom user-defined operators in unicon, if no then why not? Languages like Haskell allow for this and other procedural languages allow for operator overloading like C++ and Python
+
+
+Notes for Icon/Unicon implementation textbook
+
+Preface
+	- multiple compilers
+		- icont/iconc
+			- these are compilers that usuers use to traslate unicon code into machine 
+			  code
+				- iconc breaks icon code down to C code
+				- icont breaks icon code down to virtaul machine code
+			- a preprocessor called unicon translates unicon code into icon code which 
+			  then compiles using iconc/t
+			- "unicon" is written in unicon
+		- iconx
+			- iconx is the name of the Unicon/Icon virtual machine
+			- consists of a collection of high-level data-structure and I/O facilites,
+			  which are built in to icon/unicon
+		- rt.a
+			- the runtime  library that is linked to Icon programs compiled with iconc
+			- shared much of the code with iconx
+
+Introduction
+	- Implementing Programming Languages
+		- in conventional programming languages most of the operations that are
+		  performed upon execution can be determined statically by examining the code beforehand
+		- also, most programming languages' operations closely correspond to the 
+		  architecture of the computers on which they are executed
+		- when these two conditions are met it is easy to map source code instructions 
+		  to machine instructions for the computer to execute
+		- this translation process is called compilation
+		- in addition to a compiler most language implemetations include a run-time
+		  component that contains subroutines for performing computations that are too complex to compile in-line, such as I/O and mathematical fucntions
+		- some languages have features whose meanings change during program execution.
+			- this makes these features unable to be determined statically from the 
+  			  text of a source-language program 
+  			- examples of these features are
+  				- changing of fucntion meanings during execution
+  				- creation of new data types at run-time
+  				- self-modifying programs
+  		- also some languages have features that do not match up with the architecture
+  		  of conventional computers such as pattern matching
+  		- in these cases it is impossible for a compiler to directly translate source 
+  		  code into machine code
+  		  - these cases increase the importance of the runtime system
+  		- Icon is a language with much of these features
+  			- this means that the implementation of Icon leans much more heavily on 
+  			  the runtime system than the compiler
+
+Icon Language Overview
+	- Note: The implementer of a programming language needs a very different 
+	  understanding of the langugage of the one using it
+	- stuff I dont already know
+		- type checking is performed furing execution and automatic type conversion is 
+		  provided
+		- several operations are polymorphic, doing different operations depending on 
+		  the types of the arguments
+		- strings and structures are created during execution rather than being 
+		  declared and allocated during compilation
+		- structures have pointer semantics, each element in a structure is
+		  represented as a pointer to an object
+		- storage management is automatic
+		- memory allocation is handled by garbage collection behind the scenes
+		- the only limits on the size of objects is the practical capabilites of the 
+		  computer architecture 
+		- Icon programs are consisted of records, procedures and global identifiers
+		- Icon has no block structure
+		- scoping is static, identifiers are either global or local to procedures
+		- Icon is expression based and has reserved-word syntax
+	- Data Types
+		- int, float, strings, csets
+		- no char data type
+		- strings of characters are not arrays, they are their own data object
+		- 4 structure types, that compromise an aggregate of values
+			- list, record, table, set
+		- null value
+		- procedures are also data values
+			- procedures can be assigned to variables, returned and passed to 
+			  functions, etc
+			- cannot create procedures during program execution
+		- co-expressions are  also data types
+			- they are the expression level analog of coroutines
+			- their importance comes from Icon's expression evaluation mechanism
+		- during execution, type checking is performed
+			- ex. i := x + 1
+			- the value of x is checked to be sure that it is numeric, and if it isnt 
+			  it attempts to convert it
+			- if it cannot be converted then a runtime error will occur and the  
+			  program will be terminated
+		- Note: Icon uses the "numeric" type as either a real or integer number
+	- Expression Evaluation
+		- in most programming languages an expression always produces exactly 1 result
+		- in Icon the evaluation of an expression may produce a single result, no 
+		  result, or a sequence of results
+		- an expression that does not produce a result is said to fail while an 
+		  expression that produces a result succeeds
+		- success and failure are used to manipulate the flow of the program
+		- Icon has no Boolean type
+		- Failure in Icon does not indicate an error instead it indicates that there 
+		  was no result produced
+		- if an expression enclosed in another expression fails, the internal 
+		  expression produces no result and the outer expression cannot perform the computation and also fails
+		- this inheritance of failure allows computations to be written concisely
+		- some expressions produce variables while some produce values
+		- co-expressions
+			- due to the nature of unicon and co-expressions, there are many 
+			  complexities in the implementation
+			- if there were no co-expressions, then generators would produce results 
+			  that are limited to a single space in the program, and also it's scope can be determined during program translation
+	- one of icons notable characteristics is it's freedom from the 
+	  translation-time constraints and the ability to specify and change meanings at runtime
+	  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

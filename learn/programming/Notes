@@ -439,7 +439,8 @@ Advanced Language Features
 	- Coroutines
 		- procedures have an asymmetric relationship
 			- when a procedure is called the execution starts from the top
-			- when a coroutine is called, execution starts from the point execution was suspended
+			- when a coroutine is called, execution starts from the point execution 
+			  was suspended
 		- Process called resumption
 	- Permutations
 		- map() can be used to permute strings
