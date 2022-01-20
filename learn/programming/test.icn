@@ -1,6 +1,5 @@
 procedure main()
-	L := []
-	while put(L, read())
-
-	while write(pull(L))
+	write(image("Hi there"))
+	write(image('aeiou'))
+	write(image([]))
 end
