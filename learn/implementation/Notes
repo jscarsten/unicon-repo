@@ -1,14 +1,14 @@
 Questions
-	Unicon is written in unicon? Does this mean that the translator "unicon" is written in Unicon the language?
+	
+Is icode the icon equivalent to bytecode? If so how is it different to say java bytecode that runs on JVM
 
-	Need some clarity about what a language virtual machine is/does. I have some idea but It would help to be more clear
+Need some clarification about the null value descriptor representation. Is the n flag set? Is it just empty?
 
-	In the book it says that programming languages that are the most difficult to implement are also those that differ most from each other. How does the comlexity of the implementation of Unicon/Icon differ from other languages.
+Are qualifiers treated as descriptors in blocks?
+If yes then ... -->
+So the location for the first descriptor in a block of a given type is supposed to be the same for all blocks with that type, but with records, there may be any number of non-descriptor qualifiers that point to strings that appear before the "descriptor". In this case are qualifiers 
 
-	Would you say that easy of programming is inversly proportional to ease of implementation?
-
-	Can you define your own custom user-defined operators in unicon, if no then why not? Languages like Haskell allow for this and other procedural languages allow for operator overloading like C++ and Python
-
+The book says that Block-Pointers can be placed anywhere before the descriptors but they must be in the same place for all blocks of that type. What does a block pointer point to?
 
 Notes for Icon/Unicon implementation textbook
 
@@ -119,16 +119,6 @@ Icon Language Overview
 			  that are limited to a single space in the program, and also it's scope can be determined during program translation
 	- one of icons notable characteristics is it's freedom from the 
 	  translation-time constraints and the ability to specify and change meanings at runtime
-
-Is icode the icon equivalent to bytecode? If so how is it different to say java bytecode that runs on JVM
-
-Need some clarification about the null value descriptor representation. Is the n flag set? Is it just empty?
-
-Are qualifiers treated as descriptors in blocks?
-If yes then ... -->
-So the location for the first descriptor in a block of a given type is supposed to be the same for all blocks with that type, but with records, therre may be any number of non-descriptor qualifiers that point to strings that appear before the "descriptor". In this case are qualifiers 
-
-The book says that Block-Pointers can be placed anywhere before the descriptors but they must be in the same place for all blocks of that type. What does a block pointer point to?
 
 Language Features and implementations
 	- values and variables
@@ -377,13 +367,13 @@ Values and Variables
 	- Descriptors
 		- Every Icon value is represented by a descriptor
 		- Icon descriptors must be small as possible, while also
-		  containing enough informationto determine the type of the value and locate the actual data
+		  containing enough information to determine the type of the value and locate the actual data
 		- descriptors are composed of "words"
 		- one word is not large enough to contain both the type 
 		  information and the integer/pointer
 		- so descriptors are made of 2 words, called the d-word, 
 		  and the v-word
-			- the d-word contains descritpive info
+			- the d-word contains descriptive info
 			- the v-word contains the value
 		- different computer arhcitectures may have different
 		  sizes for words and integers/pointers may not necessarily be the same size
@@ -396,26 +386,26 @@ Values and Variables
 		- there are 12 different type codes
 			- data type | type code
 			  null	      null
-			  int 		  int or long
+			  int 		    int or long
 			  real num    real
 			  cset    	  cset
-			  file  	  file
+			  file  	    file
 			  procedure   proc
-			  list 		  list
-			  set 		  set
-			  table 	  table
-			  record	  record
+			  list 		    list
+			  set 		    set
+			  table 	    table
+			  record	    record
 			  co-expr  	  coexpr
 
 			- there are other type codes for internal objects but 
-			  they are not visible at the soruce-language level 
+			  they are not visible at the source-language level 
 	- Strings
 		- there is not type code for strings
 		- they have a special representation where the d-word
 		  contains the length of the string and the v-word points to the first character 
 		- string descriptors are called qualifiers
 		- in order to distinguish qualifiers from other
-		  descriptors wiht type codes that are the same as the string length, all descriptors that are not qualifiers have an n flag in the MSB of the d-word
+		  descriptors with type codes that are the same as the string length, all descriptors that are not qualifiers have an n flag in the MSB of the d-word
 		- the d-words of qualifiers do not have the n flag and 
 		  string lengths are prevented from overflowing into that flag's posiiton
 	- Integers
@@ -472,7 +462,178 @@ Values and Variables
 			  string s calls for the variable descriptor s to fetch the value descriptor holding "hello" that it is pointing to. This is dereferencing
 			- say you also want to assign s := 13570. The value 
 			  descriptor pointed to by the v word of the variable descriptor changes
+		- Special Variables
+			- Icon has special variables that make dereferencing and assignment more complex
+			- an example is keywords
+				- &trace is always an integer value
+				- Consider &trace =: expr
+				- the result of expr must be type checked/converted to make sure it is an 
+				  integer
+				- if we want to perform this checking on each assingment to a keyword, it 
+				  would require a lot of computation
+				- instead Icon divides variables into 2 classes, ordinary and trapped
+			- Ordinary variables point to a value and need no special processing
+			- Trapping variables are distingiushed by a t flag to indicate that it needs 
+			  special processing
+			- Trapped Variables
+				- recent versions of unicon do not use trapped variables
+				- instead special keyword variables have different descriptor types than 
+				  normal variables
+				- however they are still used for assignment to substrings, and table elements
+				- ex. procedure tabvar(n)
+							...
+							return tb[n]
+							end
+
+							tabvar(5) := 10 # is equal to tb[5] := 10
+				- for this example it is impossible for the translator to determine that 
+				  tabvar(5) returns a variable tb[5] 
+				- In this case, trapped variables are used to handle weird shit like this
+			- Keyword Variables
+				- keywords have thier own types since they always require special treatment
+				- most special cases need only special processing for assignment and not
+  			  dereferencing
+  - Descriptors and Blocks in C
+ 		- Often in order to understand the implementation of previously explained concepts
+ 		  in Icon, it is useful to look at the C code
+ 		- Descriptors in C
+ 			- when ints and pointers are the same size, the word size is the size of an int
+			  and if a pointer is larger than an int the word size is long or long long
+			- this difference in memory models is handled by typedefs under the control of 	
+			  conditional compilation
+			- so depending on the memory model the architecture follows, one of two
+			  typedefs will compile, which will determine the word size, and define the "word" type
+			- Descriptors are declared as structs 
+
+				struct descrip{
+					word dword; // type field
+
+					union {
+						word integr; 
+						#ifdef DescriptorDouble
+							double realval
+						#endif
+						char *sptr; // string ptr
+						union block *bptr; // block pointer, type defined elsewhere
+						struct descrip *dptr; // ptr to a different descriptor
+					} vword // value field
+				};
+
+			- the union represents that the vword can be various different values, int, str 
+			  pointer, block pointer, descriptor pointer
+		- Blocks in C
+			- each block type has a different struct declaration
+			- ex record block struct
+
+					struct b_record {
+						word title;
+						word blksize;
+						word id;
+						union block *recdesc; // ptr to record constructor
+						struct descrip fields[1];
+					}
+
+			- record blocks vary in size so for now we declare the fields array to be 1 
+			  descrip struct in size;
+			- actual blocks for records are constructed at run time in some region managed 
+			  by Icon's storage allocator
+			- Icon blocks conform to the C blocks except for the number of fields
+			- The C declaration provides a means of accessing portions of blocks from C
+			- ex. substring trapped variable blocks
+
+					struct b_tvsubs {
+						word title;						// T_Tvsubs
+						word sslen;						// length of substring
+						word sspos;						// position of substring
+						struct descrip ssvar; // variable that substring is from
+					}
+			- the title fields contain type codes defined as C macros
+			- the block union given in the record declaration has all the block types
+
+				union block {
+					struct b_real realblk;
+					struct b_cset cset;
+					struct b_file file;
+					struct b_proc proc;
+					struct b_list list;
+					struct b_lelem lelem;
+					struct b_table table;
+					struct b_telem telem;
+					struct b_set set;
+					struct b_selem selem;
+					struct b_record record;
+					struct b_tvsubs tvsubs;
+					struct b_tvtbl tvtbl;
+					struct b_refresh refresh;
+					struct b_coexpr coexpr;
+					struct b_externl externl;
+					struct b_slots slots;
+					struct b_bignum bignumblk;
+				}
+
+			- Note : there are other block types besides the source language data types
+		- Defined Constants
+			- type codes are defined symbolically as macros
+
+				#define T_Null 0
+				#define T_Integer 1
+				#define T_Lrgint 2
+				#define T_Real 3
+				#define T_Cset 4
+				#define T_File 5
+				#define T_Proc 6
+				#define T_Record 7
+				#define T_List 8
+				#define T_Lelem 9
+				#define T_Set 10
+				#define T_Selem 11
+				#define T_Table 12
+				#define T Telem 13
+				#define T_Tvtbl 14
+				#define T_Slots 15
+				#define T_Tvsubs 16
+				#define T_Refresh 17
+				#define T_Coexpr 18
+				#define T_External 19
+
+			- d word flags also have defined constants
+
+					n F_Nqual
+					p F_Ptr
+					v F_Var
+					t F_Tvar
+
+			- the d words themselves are defined as constants by bitwise expressions
+
+				#define D_Null (T_Null | F_Nqual)
+				#define D_Integer (T_Integer | F_Nqual)
+				#define D_Lrgint (T_Lrgint | F_Ptr | F_Nqual)
+				#define D_Real (T_Real | F_Ptr | F_Nqual)
+				#define D_Cset (T_Cset | F_Ptr | F_Nqual)
+				#define D_File (T_File | F_Ptr | F_Nqual)
+				#define D_Proc (T_Proc | F_Ptr | F_Nqual)
+				#define D_List (T_List | F_Ptr | F_Nqual)
+				#define D_Table (T_Table | F_Ptr | F_Nqual)
+				#define D_Set (T_Set | F_Ptr | F_Nqual)
+				#define D_Selem (T_Selem | F_Ptr | F_Nqual)
+				#define D_Record (T_Record | F_Ptr | F_Nqual)
+				#define D_Telem (T_Telem | F_Ptr | F_Nqual)
+				#define D_Lelem (T_Lelem | F_Ptr | F_Nqual)
+				#define D_Tvsubs (T_Tvsubs | D_Tvar)
+				#define D_Tvtbl (T Tvtbl | D_Tvar)
+				#define D_Coexpr (T_Coexpr | F_Ptr | F_Nqual)
+				#define D_Refresh (T_Refresh | F_Ptr | F_Nqual)
+				#define D_Var (F_Var | F_Nqual | F_Ptr)
+				#define D_Tvar (D_Var | F_Tvar)
+
+		- RTL Coding
+			- the optimizing compiler was introduced later in Icon (version 8/9) so the 
+			  routines for the runtime system use an extended C syntax called the RTL (Run-Time Language)
 			- 
+
+
+
+
 
 
 
