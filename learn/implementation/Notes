@@ -120,6 +120,359 @@ Icon Language Overview
 	- one of icons notable characteristics is it's freedom from the 
 	  translation-time constraints and the ability to specify and change meanings at runtime
 
+Is icode the icon equivalent to bytecode? If so how is it different to say java bytecode that runs on JVM
+
+Need some clarification about the null value descriptor representation. Is the n flag set? Is it just empty?
+
+Are qualifiers treated as descriptors in blocks?
+If yes then ... -->
+So the location for the first descriptor in a block of a given type is supposed to be the same for all blocks with that type, but with records, therre may be any number of non-descriptor qualifiers that point to strings that appear before the "descriptor". In this case are qualifiers 
+
+The book says that Block-Pointers can be placed anywhere before the descriptors but they must be in the same place for all blocks of that type. What does a block pointer point to?
+
+Language Features and implementations
+	- values and variables
+		- the absence of type delcarations has far reaching
+		  implications
+		- since any variable can be any type and the types of
+		  variables can change during execution, we must have a wasy to represent values uniformly
+		  - this is esepcially significant since Icon/Unicon has a 
+		    wide variety of variable types that can be represented
+		- The solution is heterogeneous structures
+		- in some way no type delcarations makes implementation 
+		  easier meaning that some of the work that is conventionally done by compilers can be ignored
+		- however the problem is not avoidable, it just goes to
+		  another part of the implementation
+		- automatic tpye conversion goes hand in hand with lack of
+		  type declarations
+	- storage management
+		- since structures and strings are created during
+		  execution, the space must be allocated at runtime
+		- this implies a need for some garbage collection
+		  mechanism that will reclaim allocated memory after that memeory is no longer needed
+		- the problem is further complicated by the diversity of
+		  types and sizes of objects, the lack of size limitations and possible circular pointer loops in structures
+	- strings
+		- the emphasis of Icon is string processing 
+		- there is the need for a well designed and coherent 
+		  mechanism for handling strings
+	- structures
+		- Icons unusual structures that have sophisticated access
+		  mechanisms also pose problems
+		- specifically structures that can grow without limit
+		  require different iplementation approaches than static structures
+		- the ability of lists to support stack, and queue 
+		  mechanisms will compromise efficient access for other uses
+		- sets with values that can have any type, that also
+		  provide a collection of set operations pose problems
+		- tables are similar to sets but they also need more
+		  attention since they add elements in a special way
+	- procedures and functions
+		- procedures and functions are values and must be
+		  represented as data objects
+		- this means that the meaning of a function call cannot be 
+		  determined during translation
+		- ex. write(s) may write string s or it might not 
+		  depending on whether or not write still has it's initial value 
+		- therefore procedures must be determined at runtime
+	- polymorphic operations
+		- operations cannot be changes during execution, but most
+		  arguments support polymorphic arguments (of many different types)
+		- also different operators ay have different meanings for 
+		  assignment or dereferenceing
+			- ex. s[i] := "hi"
+				  is a different operation than
+				  write(s[i])
+				  but it uses the smae operator
+		- overall the context is impossible to determine at 
+		  translation time
+	- expression evaluation
+		- generators and co-expressions present obvious
+		  implementation problems
+		- there is little knowledge in the area of expression
+		  evaluation in which expressions can produce a series of results in sequence
+		- moreover, generators and co-expression can be applied to
+		  every context with every data type
+		- therefore the implementatipon requires a new approach
+		- efficiency is a concern in this area more than others
+		- the mechanism that handles expression evaluation also
+		  has to be able to handle conventional single-result expressions as well
+	- co-expressions	
+		- only relavant because of goal-directed execution /
+		  expression evaluation of unicon
+		- without co-expressions, generators are limited to the 
+		  place where they execute in the program
+		- with co-expressions, generators can be activated at any
+		  point in a program past their declaration
+
+Organization of the Implementation
+	- many factors influence the implementation of a language
+		- properties of the language, goals, reseources, etc
+	- Icon was developed with ease of modification in mind
+	- Icon was developed for machines that only had 128K bytes of 
+	  address space
+	- The Icon Virtual Machine
+		- the icon implementation is organized around a VM
+		- VMs serve as software design tools for implementations
+		  in which the operations of a language do not fit a particular computer architecture
+		- also VMs do well if protability is a concern
+		- most VM models do some translation that will map the VM 
+		  operations onto the real machine 
+		- during the design and development of an implementation 
+		  a VM can an idealized model in which the ideosyncrasies of any real machine can be ignored
+		- Icon's Virtual Machine is incomplete, it only includes
+		  the expression evaluation mechanism and the computations on Icon data 
+        - many aspects of the Icon runtime system are not
+          represented in the VM
+        	- type checking, storage allocation, garbage   
+        	  collection
+        - Icon's VM serves more as a guide/tool for organizing the
+          implementation rather than a rigid structure
+    - Components of the Implementation
+    	- 3 major components: translator, linker, runtime system
+    	- these all fall under the virtual machine implementation
+    	- logicaly the translator and linker are different but 
+    	  they are compiled as 1 program
+    	- Translator Overview
+    		- plays the role of compiler for the Icon VM
+    		- converts source code into virtual machine
+    		  instructions
+    		- translator output is called ucode
+    		- ucode is represented in ASCII which is useful for 
+    		  debugging
+    	- Linker Overview
+    		- combines one or more ucode files into a single file 
+    		  for the VM
+    			- this allows programs to be written in multiple 
+    		  	  modules
+    		  	- also useful for giving users access to 
+    		  	  pre-translated Icon libraries
+    		- output of linker is called icode
+    		- icode is represented in binary format
+    		- ucode and icode are essentially the same just in a
+    		  different format
+    	- the process looks like this
+
+    Icon program --> [ translator ] --> ucode [ linker ] --> icode
+
+    	- these phases can be done seperately, if only phase 1
+    	  happens you get ucode, which can be linked later
+    	- the runtime system consists of an interpreter for icode
+    	  and a library of support routines to carry out the various operations that may occur when an Icon program is executed
+    	- the interpreter is the software realization of the Icon 
+    	  VM
+    - The Translator
+    	- written in C
+    	- independent of the architecture of the target machine
+    	- ucode is portable
+    	- consists of : lexical analyzer, parser, code generator, 
+    	  a few support routines
+    	- lexical analyzer converts a source program into a
+    	  stream of tokens provided to the parser as needed
+    	- the parser generates abtract syntax trees on a per
+    	  procedure basis
+    	- the syntax trees are then passed to the code generator 
+    	  and converted to ucode
+    	- the parser is generated automatically by Yacc from a 
+    	  grammatical specification
+    	- in the body of an icon procedure, a series of
+    	  expressions are seperated by semicolons.
+    	- these semicolons need not be provided explicitly
+    	- the lexical analyzer can do automatic semicolon 
+    	  insertion if a line ends with a token that legally ends
+    	  an expression and the beginning of the next line starts with a token that can legally start an expression 
+    	- if an expression spans 2 lines then the place to put 
+    	  the semicolon is the first legal token to appear
+    - The Linker
+    	- the linker reads ucode files and writes icode files
+    	- icode files starts with an executable header that loads
+    	  the runtime system
+    	- the rest of an icode file consists of file information,
+    	  operations codes and operands, and data specific to that program
+    	- the linker is written in C
+    	- conversion from ucode to icode is mainly reformatting
+    	- the linker does 2 other things besides icode conversion
+		- scope resolution
+			- if an identifier in a procedure is undeclared,
+			  it's scope is dependent on global (explicit/implicit) delcarations in the program
+			- the translator only can operate on 1 module of a
+			  program at a time, so it cannot resolve the scope of undeclared identifiers
+			- this is because not all global scope information is
+			  contained in 1 module
+			- the linker handles all the modules so it can
+			  resolve the scope of these identifiers
+			- an identifier may be global for several reasons
+				- explicit global declaration
+				- name in a record declaration
+				- name in a procedure declaration
+				- name of a built in function
+			- if an identifier with no local delcaration falls
+			  into 1 of these catagories, it is global, otherwise it is local
+		- construction of runtime structures
+			- a number of aspects of an icon program are
+			  represented at runtime by various data structures
+				- procedure blocks, strings, blocks for csets, and
+				  real literals 
+				- the ucode that represents this information is
+				  machine-independent
+				- the linker converts the information into the
+				  appropriate format for the machine architecture
+	- The Runtime System
+		- the runtime system is mostly written in C, with a 
+		  little assembly
+		- there are 2 main reasons to concetrate most of the
+		  implementation in the runtime system 
+			- some icon features do not translate well directly
+			  into executable code, since there is not a direct 
+			  image for them in the target-machine's architecture. Therefore the target machine code necessary to carry out these operations would be too big to put in-line. Instead it is placed in the library routines called from the in-line code
+				- examples include structure operations and 
+				  string scanning
+			- operations that cannot be determined at translation
+			  time must be determined at runtime. 
+				- examples of this include type checking to
+				  string scanning to structure operations
+		- there are 4 main logical parts of the runtime system
+			- initialization and termination routines
+				- init routine sets up regions in which objects 
+				  created at runtime are allocated
+				- init routine also initalizes some structures
+				  that are used during program execution
+				- after these tasks are done, control is 
+				  transferred to the interpreter
+				- when a program terminates in any way,
+				  termination routines will flush all the output buffers and return control to the OS
+			- the interpreter
+				- the interpreter analyzes icode instructions and
+				  their operands and performs the corresponding operations
+				- the interpreter is not very complex, most
+				  complex operations are performed by the library routines
+			- the library routines
+				- they are divided into 3 main catagories, Icon 
+				  operator routines, Icon built in function routines, routines for complicated Icon VM operations
+				- the meanings of operators are known to the 
+				  translator/linker so they can be called directly
+				- functions however cannot be determined until
+				  they are executed, so functions are called indirectly
+			- the support routines
+				- include storage allocation and garbage
+				  collection, type checking, conversion
+				- normally, support routines are called by the 
+				  library routines
+
+Values and Variables
+	- the features that has the greatest impact on the icon
+	  implementation is untyped variables
+	- the downside to untyped variables is that it makes it
+	  impossible for the translator to catch type errors until runtime
+	- also a person who is writing or reading an Icon program
+	  does not have type declarations to help them clarify the programs intent
+	- type checking and coversion are intertwined in the
+	  implementation
+	- untyped variables simplify the translator and complicate
+	  the runtime system
+	- since any variable can have any type of value at any time,
+	  all values must have the same size
+		- the problem to this solution is the descriptor, which
+		  either contains the data, if it is small enough, or a pointer to the data
+	- Descriptors
+		- Every Icon value is represented by a descriptor
+		- Icon descriptors must be small as possible, while also
+		  containing enough informationto determine the type of the value and locate the actual data
+		- descriptors are composed of "words"
+		- one word is not large enough to contain both the type 
+		  information and the integer/pointer
+		- so descriptors are made of 2 words, called the d-word, 
+		  and the v-word
+			- the d-word contains descritpive info
+			- the v-word contains the value
+		- different computer arhcitectures may have different
+		  sizes for words and integers/pointers may not necessarily be the same size
+			- Icon is mainly concerned with 32/64 bit 
+			  architectures
+			- also the large memory model in which pointers are
+			  larger than integers, in this case the v-word must accommodate the largest of the types
+		- d-words contain a type code, which is an integer, in 
+		  their least significant bits, and flags in their most significant bits
+		- there are 12 different type codes
+			- data type | type code
+			  null	      null
+			  int 		  int or long
+			  real num    real
+			  cset    	  cset
+			  file  	  file
+			  procedure   proc
+			  list 		  list
+			  set 		  set
+			  table 	  table
+			  record	  record
+			  co-expr  	  coexpr
+
+			- there are other type codes for internal objects but 
+			  they are not visible at the soruce-language level 
+	- Strings
+		- there is not type code for strings
+		- they have a special representation where the d-word
+		  contains the length of the string and the v-word points to the first character 
+		- string descriptors are called qualifiers
+		- in order to distinguish qualifiers from other
+		  descriptors wiht type codes that are the same as the string length, all descriptors that are not qualifiers have an n flag in the MSB of the d-word
+		- the d-words of qualifiers do not have the n flag and 
+		  string lengths are prevented from overflowing into that flag's posiiton
+	- Integers
+		- Icon supports integers up to 32 bits in size 
+		- as long as it fits, the value of an icon integer is 
+		  stored in the v-word
+		- integers are represented by 2 different type codes
+			- integer for integers that are contained in v-words
+			- lrgint for integers that are contained in blocks 
+			  pointed to by the v-words of their descriptors
+	- Blocks
+		- blocks are what icon data is stored in when the v-word 
+		  cannot hold the value
+		- the first word of every block is called the title and
+		  it contains a type code that is the same code in the d-word in the descriptor 
+		- some blocks are fixed in size for all values of a given 
+		  type
+		- the p flag in the descriptor indicates that the v-word 
+		  contains a pointer to a block
+		- some other blocks have varying sizes for other types, 
+		  like records
+		- a block will never grow or shrink in size
+		- if the type code in the title does not determine the
+		  size of the block, the second word in the block contains it's size in bytes
+		- many blocks contain an id field that is used to
+		  distinguish between different blocks of the same type
+		  	- the runtime system maintains seperate id counters
+		  	  for blocks of different types
+		- blocks may contain descriptors as well as 
+		  non-descriptors like qualifiers
+		  	- an example is record blocks which may contain
+		  	  different data types for each field
+		- non-descriptor data comes first in a block before the
+		  descriptor data
+		- the first descriptor in a block is constant for all
+		  blocks of a given type, which helps with garbage collection
+	- Variables
+		- variables are also represented with descriptors just 
+		  like values
+		- variables to identifiers point to descriptors for the 
+		  corresonding values
+		- variable descriptors never point to other variable 
+		  descriptors, always to value descriptors 
+		- the v flag indicates that the descriptor is for a 
+		  variable
+		- the values of local identifiers are kept on a program
+		  stack while static/global identifiers are kept in fixed locations in memory
+		- a variable that references some value in a data 
+		  structure references the start of the data structure and the least significant bits of the d-word will contain an offset (in words, not bytes) to the value you want to reference
+		- Operations on variables
+			- variables can be used in 2 fundamental contexts
+			  dereferencing and assignment
+			- for example the instruction write(s) for some
+			  string s calls for the variable descriptor s to fetch the value descriptor holding "hello" that it is pointing to. This is dereferencing
+			- say you also want to assign s := 13570. The value 
+			  descriptor pointed to by the v word of the variable descriptor changes
+			- 
 
 
 
