@@ -10,6 +10,8 @@ So the location for the first descriptor in a block of a given type is supposed 
 
 The book says that Block-Pointers can be placed anywhere before the descriptors but they must be in the same place for all blocks of that type. What does a block pointer point to?
 
+Is RTL an outside resource or is it developed custom for Icon
+
 Notes for Icon/Unicon implementation textbook
 
 Preface
@@ -629,7 +631,186 @@ Values and Variables
 		- RTL Coding
 			- the optimizing compiler was introduced later in Icon (version 8/9) so the 
 			  routines for the runtime system use an extended C syntax called the RTL (Run-Time Language)
-			- 
+			- operator{} is a construct that doe smultiple things
+				- the first is to declare a C function that the interpreter will call
+				- operator{1} * size(x) declares a C function size() for the * operator
+				- the arguments and results are descriptors
+			- RTL extends C's return statement to include type information, which allows
+			  the d-word of the return value to be changed the appropriate type
+			- RTL's type_case is like a switch statement which executes different code 
+			  based off the type of the input
+
+Strings and Csets
+	- in Icon, strings are the most commin data type used
+	- therefore storage and access of string data is necessary
+	- also the efficiency of frequently used operation is important like *
+	- string lengths are determined dynamically during execution
+	- the automatic storage management of strings in Icon is what gives much of the
+	  advantage to Icon for string processing 
+	- any of the 256 8-bit ASCII characters can be represented even the NULL character
+	- several Icon string operations retun substrings of a string 
+	- Icon strings are atomic, meaning that three are no string operations in Icon that
+	  change the characters in existing strings
+	- this is not obvious, there are operations that appear to change the characters in 
+    strings, but they don't
+  - the atomic nature of strings simplifies the implementation 
+  	- an example would be the assignment of a string value to a variable 
+  	- the string value is not copied in this case since the string will not change
+ 	- the order of the characters in a string is very important, csets are provided 
+ 	  when several characters have the same status and the order is not relevant
+
+ 	- Representation of Strings
+ 		- C represents strings as arrays of characters as successive bytes in memory
+ 		  terminating in a null byte
+ 			- a disadvantage of this is that you need to index through the string to find 
+ 			  it's size
+ 			- since every string in C terminates with a null byte, substrings cannot exist 
+ 			  within strings
+ 		- Icon does not use null characters, therefore there must be some external way to
+ 		  determine the end of the string 
+ 		- this is the motivation for the qualifier representation
+ 			- the qualifier includes the address of the first character and it's length
+ 		- this representation (with no null char) allows for quick computation of 
+ 		  substrings
+ 		- Note : C style strings can be utilized by Icon since qualifiers can easily 
+ 		  handle C strings, but C cannot utilize Icon strings without copying and appending a \0
+ 		- Some strings are compiled at runtime, while others like string literals can be 
+ 		  contained in the icode
+ 		- during execution, strings may be stored in work areas (usually buffers)
+ 		- when new strings are created during execution, they are allocated in a common 
+ 		  string region
+ 			- when source-code operations create a new string, its characters are appended 
+ 			  to the end of the strings already in the common string region
+ 			- the string region will continue to fill up until it is full and it has to be 
+ 			  compacted by the garbage collector, which sweeps away unneeded chars
+
+ 		- Concatenation
+ 			- ex. 
+ 					s1 := "ab" || "cdef"
+ 				- in this example the concatenation operation allocates a space for 6 chars 
+ 				  and it copies the 2 strings into that space, which is assigned a qualifier s1
+ 			- there are important optimization cases for concatenation
+ 				- if the first argument is the last string in the string region, then the
+ 				  second argument is appended to the end of the string region
+ 					- so 
+ 							s := s || str 
+
+ 							will perform less allocation than
+
+ 							s := str || s
+
+ 				- if the strings being concatenated are already adjacent in the string region 
+ 				  then you dont have to do anything
+ 				- other than that string construction operations will never use another
+ 				  instance of a string that may exist elsewhere in the string region  
+ 			- RTL code for concatenation
+
+ 				operator{1} || cater(x,y)
+ 				if !cnv:string(x) then
+ 					runerr(103, x)
+ 				if !cnv:string(y) then 
+ 					runerr(103, y)
+
+ 				abstract {
+ 					return string
+ 				}
+ 				body {
+ 					CURTSTATE();
+
+ 					/*
+ 					 * Optimization 1: Strings are adjacent in string region, no allocation
+ 					 */
+ 					if(StrLoc(x) + StrLen(x) == StrLoc(y)) {
+ 						StrLoc(result) = StrLoc(x);
+ 						StrLoc(result) = StrLen(x) + StrLen(y)
+ 						return result
+ 					}
+
+ 					else if ((StrLoc(x) + StrLen(x) == strfree)
+ 					&& (DiffPtrs(strend, strfree) > StrLen(y)) {
+
+ 					/*
+					 * Optimization 2: The end of x is at the end of the string space.
+					 * Hence, x was the last string allocated and need
+					 * not be re-allocated. y is appended to the string
+					 * space and the result is pointed to the start of x.
+					 */
+					result = x;
+
+					/*
+					 * Append y to the end of the string space.
+					 */
+					Protect(alcstr(StrLoc(y),StrLen(y)), runerr(0));
+
+					/*
+					 * Set the length of the result and return.
+					 */
+
+					StrLen(result) = StrLen(x) + StrLen(y);
+					return result;
+						}
+
+					/*
+					* Otherwise, allocate space for x and y, and copy them
+					* to the end of the string space.
+					*/
+					Protect(StrLoc(result) = alcstr(NULL, StrLen(x) + StrLen(y)), runerr(0));
+					memcpy(StrLoc(result), StrLoc(x), StrLen(x));
+					memcpy(StrLoc(result) + StrLen(x), StrLoc(y), StrLen(y));
+
+					/*
+					 * Set the length of the result and return.
+					 */
+					StrLen(result) = StrLen(x) + StrLen(y);
+					return result;
+					}
+				end
+
+		- Substrings
+			- ex. 
+					s2 := s1[3:6] # s1 --> "abcdef"
+				- this operation does not actually allocate a new string
+				- the operation actually porduces a new qualifier which points to the 
+				  beginning of the substring and includes the size of the substring
+				- in this example the substring would point to c and have a contain a size of 
+				  3
+			- this allows substrings to be retrieved while maintaining the characters in  
+			  original string 
+			- Again the difference between C strings and Icon strings is that Icon strings 
+        are atomic, immuatable, indivisible objects, while C strings are arrays of chars
+      - there are operations that appear to change the chars of a string 
+      	- ex.
+      			s1[3] := "x"
+
+      			is the same as 
+
+      			s1 := s1[1:3] || "x" || s1[4:0]
+      		- a new string is created from the concatenation
+ 					- this type of operation opens up the possibility to change the length of a 
+ 					  string by assignment to a substring,
+ 					  - ex.
+ 					  		s1[3] := "xxx" ---> s1[3] := s1[1:3] || "xxx" || s1[4:0]
+ 					  		s1[2:5] := "" --->  s1[1:2] || "" || s[5:0]
+
+ 		- Assignment to Subscripted Strings
+ 			- first off x[i] and x[i:j] are more complicated in Icon than they may appear
+ 			- the translator cannot determine the type of x in the first place
+ 				- x may be a string, list, table, or record
+ 				- also the operation performed is different for different types
+ 			- the translator also cant determine if a subscript expression is performing 
+ 			  assignment or dereferencing
+ 			  - ex. 
+ 			  		write(s[2:5])    # dereference
+ 			  		s[2:5] := "xxx"  # assignment
+ 			- the solution is trapped variables, also used for keywords
+ 				- a substring trapped variable has a t flag and the typecode tvsubs, with a 
+  			  pointer to a block that contains another typecode tvsubs, the length, the offset and another pointer to a qualifier that represents the string
+  			- Note : the trapped variable subtring block and the variable descriptor both
+  			  point to the same qualifier, which makes it possible for assingment to a substring to change the actual string held by the variable 
+
+
+
+
 
 
 
