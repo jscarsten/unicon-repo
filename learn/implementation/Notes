@@ -773,7 +773,7 @@ Strings and Csets
 				- the operation actually porduces a new qualifier which points to the 
 				  beginning of the substring and includes the size of the substring
 				- in this example the substring would point to c and have a contain a size of 
-				  3
+				 3
 			- this allows substrings to be retrieved while maintaining the characters in  
 			  original string 
 			- Again the difference between C strings and Icon strings is that Icon strings 
@@ -805,9 +805,85 @@ Strings and Csets
  			- the solution is trapped variables, also used for keywords
  				- a substring trapped variable has a t flag and the typecode tvsubs, with a 
   			  pointer to a block that contains another typecode tvsubs, the length, the offset and another pointer to a qualifier that represents the string
-  			- Note : the trapped variable subtring block and the variable descriptor both
-  			  point to the same qualifier, which makes it possible for assingment to a substring to change the actual string held by the variable 
+  			- Note : the trapped variable substring block and the 
+  			  variable descriptor both point to the same qualifier, which makes it possible for assingment to a substring to change the actual string held by the variable 
+  			- the length and offset of the substring varible block is 
+  			  what allows for the production of a qualifier for the substring
+  			- so since the variable block and the original variable 
+  			  qualifier point to the same string, if the value of the substring is changed by through assignment 
+  			  (concatenation), the string value stored in the original variable qualifier will also change
+  				- ex. 
+  					s := "123456"
+  					s[2:4] := "x"
+  					write(s) # --> prints "1x456"
+  			- after substring assignment the length of the subscripted
+  			  portion of the string will change to reflect the length of the string that was assigned to it
 
+  		- String Mapping
+  			- Recall map() usage :
+  				ex. write(map("01234", "43210", "abcde")
+					-> returns "edcbe" 
+
+  			- The mapping is done using the character array maptab.
+  			- the array is created by first assigning every possible
+  			  character to its own position in maptab (0 -> 255)
+  			  	- maptab[i] = i
+  			- then for each character in s2, the position in 
+  			  maptab corresponding to the value of that character in s2 is assigned the value of the character in s3 that has the same position
+  			  	- Note : s2 and s3 are &ucase, &lcase by default
+  			  	- maptab[s2[j]] = s3[j] 
+  			  	  # where j - range(0, len(s2)) 
+  			- to avoid rebuilding maptab this step can be skipped if the
+  			  previous map call used the same s2 and s3. the global variables maps2 and maps3 hold the cached values
+  			- Now that the maptab is built, you can run through s1 and 
+  			  map out the new string using the maptab array
+  				- while(slen-- > 0)
+  				      *str2++ = maptab[*str1++]
+  	- Csets
+  		- there are a possible 256 different characters that can occur 
+  		  in csets
+  		- cset blocks consist of the title, number of characters
+  		- next in the block comes a bunch of words, containing a total 
+  		  of 256 bits, with each bit in each word representing 1 character
+  		  - for a wordszie of 32 bits, then the words are 8 bits and 
+  		    there will be 32 words in the cset block other than the title and length
+  		- if the bit is set, then it is present in the cset, if not, it 
+  		  is not present in the cset 
+  		- cset block C structure
+  			
+  			struct b_cset {
+  				word title;
+  				word size;
+  				unsigned int bits [CsetSize]
+  			}
+
+  		- CsetSize is the number of words it takes to add to 256 bits
+  		- not very many programs use the size of the cset so the size
+  		  field is initially set to -1 and the actual size is computed if its needed
+		- cset operations are fairly straighforward
+		- the characters in a cset are represented by a bit vector of 
+		  bits divided into words
+
+Lists
+	- most programming languages provide an array or vector data type to 
+	  access data elements by position
+	- icon lists are different becuase they are constructed during
+	  runtime rather than during compile time
+	- this means that the size of the list is not known until runtime
+	- a list value is actually a descriptor that points to a block
+	  structure that holds the elements
+	- so lists are passed by reference in this way
+	- the biggest implementation issue of lists is their ability to grow
+	  and shrink through the stack and queue operations		
+
+	- Structure of Lists
+		- a list consists of a fixed size list-header block
+		- a list-header block contains...
+			- title
+			- current size of the list
+			- block pointers that point to the first and last blocks of 
+			  a doubly-linked chain of list-element blocks that contain the actual list elements
+		- list element blocks vary in size
 
 
 
