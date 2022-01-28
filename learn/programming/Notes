@@ -460,6 +460,17 @@ Advanced Language Features
 		- WDelay(t) : waits until t milliseconds have passed
 		- WDone() : waits fro user to dismiss the output window by pressing "q" and then
 		  terminates the program and closes the window
+	- Arrays
+		- there are array representations in unicon that are faster than lists 
+		- used for interfacing with other languages
+		- arrays have a fixed size and if you change the size it becomes a list
+		- lists occupy approximately twice the space that arrays do
+		- to create an array
+			- list(n, x) where x is an integer or real value, and n > 0
+		- you can convert a list into an array if the list meets the requirements for an array
+			- list(***list to be converted***)
+
+The System Interface
 <<<<<<< HEAD
 
 System Interface
@@ -1328,17 +1339,7 @@ Writing Large Programs
 
 			 
 =======
-	- Arrays
-		- there are array representations in unicon that are faster than lists 
-		- used for interfacing with other languages
-		- arrays have a fixed size and if you change the size it becomes a list
-		- lists occupy approximately twice the space that arrays do
-		- to create an array
-			- list(n, x) where x is an integer or real value, and n > 0
-		- you can convert a list into an array if the list meets the requirements for an array
-			- list(***list to be converted***)
 
-The System Interface
 	
 >>>>>>> d269b5902f18023d13a413ea908e3c162ebf18b0
 		

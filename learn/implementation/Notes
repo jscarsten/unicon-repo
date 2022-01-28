@@ -12,6 +12,12 @@ The book says that Block-Pointers can be placed anywhere before the descriptors 
 
 Is RTL an outside resource or is it developed custom for Icon
 
+Icon List position access. I want some clarification about how this works. So I beleive that first the list positional access RTL code is run and it returns a variable descriptor that points to the address of the top of the block and accesses the element through an offset. I think the way the RTL code works is that it links through the LE block slots until it finds the correct element. If this is right then list positional access is not efficient like array positional access is. It is similar to linked list access which is O(n)
+
+Is there support for multi-dimensional unicon arrays?
+
+
+
 Notes for Icon/Unicon implementation textbook
 
 Preface
@@ -884,8 +890,78 @@ Lists
 			- block pointers that point to the first and last blocks of 
 			  a doubly-linked chain of list-element blocks that contain the actual list elements
 		- list element blocks vary in size
+		- C struct for list header block
 
+				struct b_list { /* list-header block */
+					word title; /* T_List */
+					word size; /* current list size */
+					word id; /* identification number */
+					union block *listhead; /* first list-element block */
+					union block *listtail; /* last list-element block */
+				};
 
+		- a list-element block contains...
+			- title
+			- size of block in bytes
+			- 3 words used to determine the location of the elements in the the block
+			- block pointers that point to the next and previous list-element blocks
+			- slots for elements
+		- C struct for list-element block
+
+				struct b_lelem { /* list-element block */
+					word title; /* T_Lelem */
+					word blksize; /* size of block */
+					word nslots; /* total number of slots */
+					word first; /* index of first used slot */
+					word nused; /* number of used slots */
+					union block *listprev; /* previous list-element block */
+					union block *listnext; /* next list-element block */
+					struct descrip lslots[1]; /* array of slots */
+				};
+		- when a list is initialized in the source code there is only one list element 
+		  block, others are added to the chain with pushes or puts
+		- list element blocks have a minimum number of slots which allows for extra room 
+		  when adding new elements to lists that grow over time list adding an empty list that will grow later
+		- Normally the minimum number of slots is 8
+		- put() adds an element to the end of the list
+		- push() adds an element to the front of the list
+		- Note: since the slots are a circular doubly linked list, what keeps track of
+		  the front of the list is the information contained in the header of the list-element block that keep track of the number of total slots, the first slot used, and the number of slots used. it may appear as though the list elements do not appear in the correct order but they are correct
+		- when you remove an element, it does not shorten the list-element block or
+		  overwrite anything, it just becomes inaccessable
+		- In the case of a list-element block slots becoming full, then a new block is 
+		  allocated and linked in
+		- the size of the new block is either half the number of elements in the entire
+		  list, or MinListSlots
+		- Unicon imposes an upper limit MaxListSlots
+		- looking at diagrams in book makes it much more clear
+		- If a block has all of it's elements removed, it will still be linked to the 
+		  other blocks (first slot used will be 0)
+			- this is to ensure that there is always at least 1 list-element block even if 
+			  the list is empty
+			- the only time when a list-element block is removed is when an element is
+			  removed from a list in which the chain contains an empty list-element block, then you can remove the empty block
+
+	- Positional Access
+		- to get a[i] it requires locating the correct list-element block
+		- if a list has several LE blocks then you have to link through the blocks while
+		  keeping track of how many elements you've seen until you find the i'th element
+		- a[i] will return a variable descriptor that points to the right slot in the LE 
+		  block
+
+	- Array Access (Unicon only)
+		- Unicon offers an optimzed special list structure for fast access to list 
+		  elements
+		- a unicon array is a list where all the elements are the same type and are in a 
+		  single block, all contained in consecutive slots
+		- since all the elements are the same type, they can be accessed very fast by 
+		  indexing
+		- if any operation is performed on an array that would only be able to be
+		  performed on a list it is converted to one
+			- an example would be push(), put(), replacing an element for one of a 
+			  different type, etc
+
+Sets and Tables
 
 
 
