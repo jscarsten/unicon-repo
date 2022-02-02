@@ -16,7 +16,7 @@ Icon List position access. I want some clarification about how this works. So I 
 
 Is there support for multi-dimensional unicon arrays?
 
-
+Sets have a number of segments in the set-header block which contain increasing numbers of slots which each contain it's own linked list header node. So the slot number the value is inserted into is calculated by taking the remainder from dividing the hash value from the number of slots. At which point it will be inserted by order of hash number into that slot's linked list (which might be empty). How is lookup performed in this scheme. Is it by calculating the hash value of the lookup value and checking to see if it's in that slot? What is the purpose of the segments? Why do the segments grow in size?. I am unsure why it helps performance. Also isn't it a lot of space to allocate for 1 structure?
 
 Notes for Icon/Unicon implementation textbook
 
@@ -961,10 +961,92 @@ Lists
 			- an example would be push(), put(), replacing an element for one of a 
 			  different type, etc
 
-Sets and Tables
+Sets and Tables	
+	- sets and tables are data aggregates that few languages support
+	- the main reason that these data types do not exist in many lnaguages is because 
+	  of the difficulty of implementation
+	- sets support the common mathematical operations that you find over finite sets
+		- union, intersection, difference, removal, insertion, membership
+	- sets in Icon can contain members of any type
+	- there are many attributes of sets that cause the implementation to become more
+	  difficult
+		- heterogeneity of members
+		- ability to grow/shrink
+		- efficient access
+		- insertion and deletion of members
+		- arbitrarily large sets
+	- tables on the other hand have more structure
+	- a table is a set of pairs that represents a many-to-one relationship function
+	- programmers use them more literally, using them to tabulate a set of values
 
+	- Sets
+		- Data Organization for sets
+			- hash lookup and linked lists are used to provide an efficient way of 
+			  locating set members
+			- for every set, there is a set header block that contains...
+				- a word for the number of elements in the set
+				- slots that serve as heads of linked lists of set-element blocks
+			- So the way that data is stored in sets is with a hash table
+				- the hash table is split up into segments with the first segement having
+				  the least number of slots and the following segments each being twice as large as the last
+				- the reason for this is because small tables benefit from reduced memory 
+					and large tables have better performance
+				- each set element is stored in a set-element block
+					- set element blocks are the nodes in the linked lists and they contain...
+						- a desriptor for it's value, the hash number and a pointer to the next 
+						  node
+				- whenever an element is looked up, a hash number is computed from it's value
+					- the hash function is --> 8 * golden ratio * value
+				- the absolute value of the remainder resulting from dividing this hash
+				  number by the number of slots is it's spot in the hash table
+				- the hash number of the value being looked up is compared with the hash 
+				  numbers on the set-element blocks
+				- If there is a match, the values may or may not be the same, since 
+				  collisions are unavoidable. but it is necassary now to compare the values to determine if they are the same
+				- the set-element block nodes are ordered by their hash numbers, so that
+				  when the linked list is being examined, the search stops if the hash number of an element on the list is greater than the hash number of the
+				  value being looked up
+				- when the lookup is for the purpose of insertion, then if the value is not 
+					found, then a new set-element block is allocated and inserted into the list
+		- Set Operations
+			- union, intersection, and difference all produce new sets and do not modify 
+			  their arguments
+			- union
+				- a copy of the larger set is made first, includes set-header and all 
+				  set-element blocks, no lookups required
+				- then each element in the smaller set is inserted by lookup
+				- the insertions may take longer however since the linked lists may be longer
+			- intersection
+				- a copy of the smaller set is made and any member that is not in the larger 
+				  set is omitted
+			- difference
+				- a copy of the first argument set is made, adding only elements that are 
+				  not in the second argument set
+				- involves looking up all arguments of the first set in the second
 
-
+	Tables
+		- similar to sets with an added default value descriptor in the table-header 
+		  block
+		- table lookup is more complicated then set lookup since table elements can 
+		  contain both an entry value and an assigned value (key, value pair)
+		- also table entries can be referenced by either value
+		- a table element block contains...
+			- pointer to next table element block node in the list
+			- the hash number
+			- the entry value descriptor
+			- the assigned value descriptor
+		- table reference t[x] uses x as the hash parameter to compute a hash value and 
+		  select a slot
+		- the corresponding list is then searched for the block that contains the same 
+		  entry value
+		- in sets the values are compared only if the hashes are the same
+		- if a matching entry value is found then a variable descriptor is created that
+		  points to the corresponding assigned value
+		  - this is done so that the assigned value can be used in assignment/
+		    dereferencing
+		- if a matching entry is not found, then either, the default value is returned 
+		  (dereferencing), or a new element is added to the table (assignment)
+		- this is done through trapped variables like with substrings
 
 
 
