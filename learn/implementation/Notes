@@ -1,22 +1,7 @@
 Questions
 	
-Is icode the icon equivalent to bytecode? If so how is it different to say java bytecode that runs on JVM
+The example in the book for stack based evaluation is "?10". The example shows how the VM handles built in function calls via the stack, but "?10" is a generator. How does the stack handle this? Does it just call it repeatedly?
 
-Need some clarification about the null value descriptor representation. Is the n flag set? Is it just empty?
-
-Are qualifiers treated as descriptors in blocks?
-If yes then ... -->
-So the location for the first descriptor in a block of a given type is supposed to be the same for all blocks with that type, but with records, there may be any number of non-descriptor qualifiers that point to strings that appear before the "descriptor". In this case are qualifiers 
-
-The book says that Block-Pointers can be placed anywhere before the descriptors but they must be in the same place for all blocks of that type. What does a block pointer point to?
-
-Is RTL an outside resource or is it developed custom for Icon
-
-Icon List position access. I want some clarification about how this works. So I beleive that first the list positional access RTL code is run and it returns a variable descriptor that points to the address of the top of the block and accesses the element through an offset. I think the way the RTL code works is that it links through the LE block slots until it finds the correct element. If this is right then list positional access is not efficient like array positional access is. It is similar to linked list access which is O(n)
-
-Is there support for multi-dimensional unicon arrays?
-
-Sets have a number of segments in the set-header block which contain increasing numbers of slots which each contain it's own linked list header node. So the slot number the value is inserted into is calculated by taking the remainder from dividing the hash value from the number of slots. At which point it will be inserted by order of hash number into that slot's linked list (which might be empty). How is lookup performed in this scheme. Is it by calculating the hash value of the lookup value and checking to see if it's in that slot? What is the purpose of the segments? Why do the segments grow in size?. I am unsure why it helps performance. Also isn't it a lot of space to allocate for 1 structure?
 
 Notes for Icon/Unicon implementation textbook
 
@@ -1047,6 +1032,139 @@ Sets and Tables
 		- if a matching entry is not found, then either, the default value is returned 
 		  (dereferencing), or a new element is added to the table (assignment)
 		- this is done through trapped variables like with substrings
+
+		- Hash Functions
+			- ideally a hash function should return a different hash value for 
+			  each input
+			- also for the Icon set/table has function the remainder produced
+			  from dividing the hash by the number of slots should have a uniform distribution
+			- this ideal hash function would require an unreasonable amount of 
+			  storage and comuptation
+			- hash computations have been studied extensively and in general
+			  lookup time and storage overhead are inversely propotional
+	
+The Interpreter
+	- the interpreter is the software realization of Icon's VM
+	- stack based
+	- the basic units of the VM are descriptors
+	- instructions for the interpreter consist of operations that 
+	  manipulate the stack, call C functions that carry out built in functions and manage flow control.
+	- the interpreter consistes of a loop in which a VM instruction is
+	  fetched and control is transferred to a section of code that can execute the corresponding operation
+
+	- Stack-Based Evaluation
+		- VM instructions typically push/pop data off the interpreter 
+		  stack
+		- the interpreter stack is distinct from the C program stack
+		- the interpreter stack is an array of words
+		- the variable "sp" points to the last word pushed to the stack, 
+		  i.e. the top of the stack 
+		- pushing increments sp by 1 word, while popping decrements sp by 
+		  1 word
+		- when the interpreter calls a built in operation, it pushes the 
+		  arguments onto the stack as descriptors
+		- then the corresponding C function is called with a pointer to
+		  the place on the interpreter stack where the arguments begin
+		- a null argument is pushed first to serve as the zeroith 
+		  argument or Arg0
+		- Arg0 will hold the return value of the C function so that when 
+		  the C function returns, Arg0 will be at the top of the stack
+		- Normally for more conventional virtual machines, the result 
+		  would be pushed to the stack via a push() operation, but returning the value as an argument is better for Icon
+		- ex.
+			Consider the expresion ?10
+			the corresponding VM operations are ...
+			pnull		# push null
+			int 	10  # pushdescriptor for 10
+			random		# compute random value
+
+			the first 2 instructions operate on the stack while the third instruction calls a C function
+
+	- Virutal Machine Instructions 
+		- every aspect of Icon expressions in the source code are
+		  reflected either directly or indirectly, in the Icon VM instruction set
+		- the same should be said for constants, identifiers, and  
+		  operators
+		- the meaning of an operation is fixed and cannot be changed
+		  during execution		
+		- however, the meaning of a function call cannot be determined 
+		  until it is evaluated
+		- there is one instruction for function invocation
+		- many VM instructions are specific to control structures and the unique
+		  expression evaluation of unicon
+
+		- Constants
+			- 4 types of literal data types
+				- integers, strings, csets, real numbers
+			- the 4 corresponding VM instructions are ...
+				- int 	n 		# integer n
+				- str 	n, a 	# string of length n at addr a
+				- cset  a 		# cset block at addr a
+				- real  a     # real block at addr a
+			- the value of an integer literal appears as an argument of the "int" 
+			  instruction
+			- the arguments of the "str" instruction holds the length and addr of the 
+			  string
+				- the actual string is constructed by the linker and loaded into memory from 
+				  the icode file
+			- for csets and blocks, the linker will construct the blocks loads them into 
+			  memory from the icode file
+				- these blocks are identical ot the blocks that are constructed during
+				  program execution
+			- the VM instructions "str", "int", and "cset" push appropriate descriptors
+			  onto the VM stack to reference the data as it appeas in the icode
+			- ex.  ?"aeiou"
+
+					the corresponding VM instructions would be ...
+
+					pnull				   # push Arg0
+					str      5, a  # create and push a qualifier descriptor from <5, a>
+					random			   # get a random character
+
+					The value produced by the random instruction will replace the null descriptor
+
+			- Identifiers
+				- from the interpreter's perpsective, there are 4 different types of 
+				  identifiers
+				 	- global, static, local, arguments
+				- global and static identifiers are kept in arrays located at some fixed 
+				  memory location
+				- local identifiers and arguments are kept on the stack as part of the data
+				  that is associated with a procedure call
+				- when a procedure is called ... 
+					- the values of the arguments are pushed on to the stack first
+					- then the local identifiers for that procedure are pushed with an initial 
+					  null value
+					- there is a fixed section of the stack in between the arguments and the 
+					  local identifiers that contains information that is saved when a procedure is called. The information is explained later on
+				- There are 4 VM instructions for constructing variable descriptors
+					- global		n
+					- static 		n
+					- arg 			n
+					- local 		n
+				- identifiers are indexed starting from 0
+				- ex.
+						arg 		0 # pushes a variable descriptor for the first argument
+				- in every case, the descriptor that is pushed, is a variable descriptor 
+				  that points to the value descriptor for the corresponding identifier
+				- ex. Assingment
+						j := 1
+
+						the corresponding VM instructions are
+
+						pnull 				# push null descriptor
+						local 		2   # push variable descriptor for j
+						int 			1   # push descriptor for integer 1
+						asgn          # assignment of 1 to variable j
+
+				- Note : assign will assign the value (2nd arg) to the variable (first arg) 
+				  and it will overwrite Arg0 with a variable descriptor which points to the local value descriptor contained further down the stack. so at this point the top of the stack points to the variable descriptor
+
+				- ex. Assignment 2
+
+				
+
+
 
 
 
