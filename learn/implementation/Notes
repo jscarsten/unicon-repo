@@ -2,6 +2,11 @@ Questions
 	
 The example in the book for stack based evaluation is "?10". The example shows how the VM handles built in function calls via the stack, but "?10" is a generator. How does the stack handle this? Does it just call it repeatedly?
 
+for the identifier VM instructions (local, arg) what is the integer argument beign passed to these instructions?
+
+what is the advantage of pushing the null value as a placeholder for the return value before pushing the other args rather than just pushing the arguments, computing the results and pushing the result to the stack?
+
+in the operator section of the book, the example VM istructions now give the variable name as the argument instead of the integer. Is this intentional in the source code, or is it just a way for the reader to better understand the instruction in the book? I am a bit unclear.
 
 Notes for Icon/Unicon implementation textbook
 
@@ -1150,7 +1155,7 @@ The Interpreter
 				- ex. Assingment
 						j := 1
 
-						the corresponding VM instructions are
+						the corresponding VM instructions are ...
 
 						pnull 				# push null descriptor
 						local 		2   # push variable descriptor for j
@@ -1161,6 +1166,53 @@ The Interpreter
 				  and it will overwrite Arg0 with a variable descriptor which points to the local value descriptor contained further down the stack. so at this point the top of the stack points to the variable descriptor
 
 				- ex. Assignment 2
+						z := x
+						 the corresponding VM instructions are ...
+						 
+						 pnull			  # push null descriptor
+						 local 		0   # push z variable onto stack (first arg to asgn)
+						 arg 			0   # push x variable (second arg to asgn)
+						 asgn 				# do assignment
+
+				- Operators
+					- each of the 42 different operators has a different VM instruction
+					- random / asgn from the previous sections are examples
+					- very few of the Icon operators are simple
+						- for example x + y requires doing type checking/conversion on x and y,
+						  and throwing an error if the addition is not possible
+						- also what if x is an int but y is a floating point, in this case x is
+						  converted to a float  
+						- the complexity is not evident for the VM instructions for add which is 
+
+								pnull
+								local 		x
+								local 		y
+								plus
+
+						- in the previous VM instruction examples the indices used to access
+						  identifiers are now replaced by the names of the identifiers which are assumed to be local
+							- this is for ease of reading?
+						- in the case of augmented assingment operations, ex. -> (i +:= 1)
+							- these do not have their own VM instructions, instead the "dup" 
+							  instruction first pushes a null descriptor and then pushes a duplicate descriptor that points to the same variable as the descriptor that was on the top of the stack before
+							- so the stack would read 
+
+								null descriptor
+								local i        --------> i 
+								null descriptor   |
+								duplicate 		 ----
+
+							- the dup instruction essentiall takes the place of a second
+
+								pnull
+								local i
+
+							- what about the case of a more complicated augmented assignment?
+							- ex. a[j] +:= 1 
+							- the duplication now saves a lot more computation
+
+
+ 
 
 				
 
