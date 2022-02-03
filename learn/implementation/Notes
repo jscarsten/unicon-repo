@@ -8,6 +8,8 @@ what is the advantage of pushing the null value as a placeholder for the return 
 
 in the operator section of the book, the example VM istructions now give the variable name as the argument instead of the integer. Is this intentional in the source code, or is it just a way for the reader to better understand the instruction in the book? I am a bit unclear.
 
+What is mutual exclusion
+
 Notes for Icon/Unicon implementation textbook
 
 Preface
@@ -1210,6 +1212,28 @@ The Interpreter
 							- what about the case of a more complicated augmented assignment?
 							- ex. a[j] +:= 1 
 							- the duplication now saves a lot more computation
+
+				- Functions
+					- the meaning of an operation is fixed and can be translated into a specific Vm instruction
+					- the meaining of a function call can change during execution so it cannot be understood at translation time
+					- the value of a function can be computed as in
+						- (p[i])(x, y)
+					- the general form of the call is
+						- expr0(expr1, expr2, ... exprn)
+						- the corresponding VM instructions
+
+						code for expr0
+						code for expr1
+						code for expr2
+						...
+						code for exprn
+						invoke n
+					- the invoke instruction is kinda complex, since expr0 could be a procedure, an integer (mutual evaluation) or an erroneous value
+					- invokation is discussed later on
+				- Self-Modifying Instructions
+					- there are seven opcodes, some of which have already been mentioned, that contain operands whose values are addresses wihtin the VM icode
+					- the linker cannot know these runtime addresses, so instead it generates the instructions with byte offsets, relative to the current instruction
+					 
 
 
  
