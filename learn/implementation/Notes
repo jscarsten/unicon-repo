@@ -1315,7 +1315,33 @@ The Interpreter
 			- DerefArg(n) dereferences arg n, if it's a variable, it is replaces by that 
 			  variables value
 			  - dereferencing is done in place by changing descriptors on the stack
-			- 
+			- Call_Op / Call_Cond calls the corresponding C
+			instruction with a pointer to Arg0 provided by Setup_Op()
+			- the actual op function pointer is retrieved from an array of pointers to functions
+			- if the C function returns a result, it is placed in Arg0, the interpreter adjusts sp to point to the return value, the switch statement breaks and the loop is started from the top to fetch another instruction
+			- some VM instructions have operands which follow the icode insturction
+			- ex.
+				 int n
+			- the interpreter code for instructions with operands will fetch the operands before calling the C function
+			- ex. interpreter code for int
+
+				case Op_Int:
+					PushVal(D_Integer);
+					PushVal(GetWord);
+					break;
+
+			- PushVal(x) pushed x onto the interpreter stack. 
+				- We want to push the descriptor onto te stack, not the actual value so we first push the dword (PushVal(D_Integer)) then the v-word (PushVal(GetWord))
+				
+	- Interpreter State Variables
+		- the state of the interpreter is described by variables called i-state variables
+		- the two already mentioned are sp, the interpeter stack pointer and ipc, the interpreter program counter
+		- the interpreter can push frames onto the stack that are like C funtion stack frames
+			- the frames contain information (mostly i-state variables) that is saved when a procedure is called and updated when it is returned
+		- there are special frames for some aspects of expression evaluation (Chapter 9)
+		- pointers to frames are i-state variables
+		- maintaining all the i-state variables is central to the interpreter
+
 
 
  
