@@ -1,0 +1,8 @@
+link basename
+
+procedure main(argv)
+	f1 := open(argv[1], "m-")
+	f2 := open(basename(argv[1]), "w")
+	while write(f2, read(f1))
+
+end

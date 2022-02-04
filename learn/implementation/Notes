@@ -8,17 +8,19 @@ what is the advantage of pushing the null value as a placeholder for the return 
 
 in the operator section of the book, the example VM istructions now give the variable name as the argument instead of the integer. Is this intentional in the source code, or is it just a way for the reader to better understand the instruction in the book? I am a bit unclear.
 
-What is mutual exclusion
+Does the interpreter first fetch the current instruction, then increment the ipc, then process the fetched instruction? In that order? Wouldn't it make more sense to fetch the instruction, then process it, then move on to the next?
+
+What is the difference between Call_Op an Call_Cond? In the book the Plus operation is executed with Call_Op, but the source code calls with Call_Cond. Also the paragraph after the example talks about Call_Cond as if the example used it instead of Call_Op.
 
 Notes for Icon/Unicon implementation textbook
 
 Preface
 	- multiple compilers
 		- icont/iconc
-			- these are compilers that usuers use to traslate unicon code into machine 
+			- these are compilers that users use to translate unicon code into machine 
 			  code
 				- iconc breaks icon code down to C code
-				- icont breaks icon code down to virtaul machine code
+				- icont breaks icon code down to virtual machine code
 			- a preprocessor called unicon translates unicon code into icon code which 
 			  then compiles using iconc/
 			- "unicon" is written in unicon
@@ -27,7 +29,7 @@ Preface
 			- consists of a collection of high-level data-structure and I/O facilites,
 			  which are built in to icon/unicon
 		- rt.a
-			- the runtime  library that is linked to Icon programs compiled with iconc
+			- the runtime library that is linked to Icon programs compiled with iconc
 			- shared much of the code with iconx
 
 Introduction
@@ -639,7 +641,7 @@ Values and Variables
 			  based off the type of the input
 
 Strings and Csets
-	- in Icon, strings are the most commin data type used
+	- in Icon, strings are the most common data type used
 	- therefore storage and access of string data is necessary
 	- also the efficiency of frequently used operation is important like *
 	- string lengths are determined dynamically during execution
@@ -649,8 +651,8 @@ Strings and Csets
 	- several Icon string operations retun substrings of a string 
 	- Icon strings are atomic, meaning that three are no string operations in Icon that
 	  change the characters in existing strings
-	- this is not obvious, there are operations that appear to change the characters in 
-    strings, but they don't
+	- this is not obvious, there are operations that appear to change the characters 
+	  in strings, but they don't
   - the atomic nature of strings simplifies the implementation 
   	- an example would be the assignment of a string value to a variable 
   	- the string value is not copied in this case since the string will not change
@@ -1214,8 +1216,10 @@ The Interpreter
 							- the duplication now saves a lot more computation
 
 				- Functions
-					- the meaning of an operation is fixed and can be translated into a specific Vm instruction
-					- the meaining of a function call can change during execution so it cannot be understood at translation time
+					- the meaning of an operation is fixed and can be translated into a 
+					  specific Vm instruction
+					- the meaining of a function call can change during execution so it cannot 
+					  be understood at translation time
 					- the value of a function can be computed as in
 						- (p[i])(x, y)
 					- the general form of the call is
@@ -1228,12 +1232,90 @@ The Interpreter
 						...
 						code for exprn
 						invoke n
-					- the invoke instruction is kinda complex, since expr0 could be a procedure, an integer (mutual evaluation) or an erroneous value
+					- the invoke instruction is kinda complex, since expr0 could be a 
+					  procedure, an integer (mutual evaluation) or an erroneous value
 					- invokation is discussed later on
 				- Self-Modifying Instructions
-					- there are seven opcodes, some of which have already been mentioned, that contain operands whose values are addresses wihtin the VM icode
-					- the linker cannot know these runtime addresses, so instead it generates the instructions with byte offsets, relative to the current instruction
-					 
+					- there are seven opcodes, some of which have already been mentioned, that
+					  contain operands whose values are addresses wihtin the VM icode
+					- the linker cannot know these runtime addresses, so instead it generates 
+					  the instructions with byte offsets, relative to the current instruction
+					- at runtime, the interpreter obtains the addess of the instruction by 
+					  adding the current instruction pointer to the offset
+					- after one of these instructions is encountered by the interpreter, it adds the offset and stores the actual pointer in the offset field and modifies the opcode
+					- the self modifying instructions and their address holding counterparts 
+					  are as follows ...
+					  
+					  	str 				Astr
+					  	cset 				Astr
+					  	real 				Areal
+					  	global		  Aglobal
+					  	static      Astatic
+					  	goto 				Agoto
+					  	mark 				Amark 
+
+					- the first 4 instructions (str, cset, real, global) push a descriptor for 
+					  their respective values onto the stack
+					- goto sets ipc to offset n
+					- mark creates an expression frame
+					- the addresses of the operands of each of these types in some way, 
+					  cannot be known during translation
+					- therefore the linker will generate the instruction with the offset in
+					  order to locate the addresses of the values
+					- in each case the opcode and the offset operand are changed, thus
+					  self-modification
+					- the self-modification is done through 2 "put" macros
+						- PutOp(Op_Astr) on the current opcode
+						- PutWord(opnd)
+						- or, if the IP is referring to the operand, PutInstr(Op_Astr, opnd, 2)
+					- the self modifying instructions create a race condition which needs to 
+					  be protected by mutexes
+
+	- The Interpreter Proper	
+
+		- The Interpreter Loop			 
+			- the interpreter, called interp() is not that complicated
+			- it maintains an icode instruction pointer called "ipc"
+				- I assume it stands for icode program counter
+			- the interpreter starts by fetching the instruction through the ipc and then 
+				incrementing ipc to the next location
+			- then it branches to some section of code that processes the VM instructions 
+			  that it fetched
+			- /runtime/imain.r has the main interpreter code 
+			- Here is the interpreter loop ...
+
+					for (;;) {
+						op = GetWord;
+
+						switch(op){
+						...
+						case Op_Asgn:
+						...
+						case Op_Plus:
+						...
+						}
+
+						continue;
+						...
+					}
+
+			- GetWord is a macro defines to be (*ipc++)
+			- macros are used A LOT in the interpreter to avoid repetition in code
+			- ex. instruction "plus"
+
+				case Op_Plus: /* e1 + e2 */
+					Setup_Op(2);
+					DerefArg(1);
+					DerefArg(2);
+					Call_Op;
+					break;
+
+			- Setup_Op(n) sets up a pointer to the address of Arg0 on the interpreter stack
+			- the value of n is the number of args on the stack
+			- DerefArg(n) dereferences arg n, if it's a variable, it is replaces by that 
+			  variables value
+			  - dereferencing is done in place by changing descriptors on the stack
+			- 
 
 
  
