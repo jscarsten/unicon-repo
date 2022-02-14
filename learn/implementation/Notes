@@ -2,6 +2,8 @@ Question
 	
 So I am a bit confused about removing C frames from the C program stack when an expression is unmarked and there are generator frames on the stack
 
+zero failure ipc?
+
 So for repeated alternation, when the expression produces a result, the current failure ipc is set to the beginning of the alternation expression L1 via chfail. This means that upon the next of expr, if it fails, the instructions for |expr execute again. Wouldn't we want to transfer control to the enclosing expression in this case? I also understand that each alternation causes a new expression marker on the stack. I am just confused about how failure is handled in general for repeated alternation.
 
 Notes for Icon/Unicon implementation textbook
@@ -1666,86 +1668,10 @@ Expression Evaluation
 				- if expr2 succeeds, it's result is pushed to the stack
 				- limit checks to see if the result is legal (int >= 0)
 				- if the result is not legal, first it tries to convert it
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
-			- the pfail VM instruction first fails the current procedure then transfers 
+				- the pfail VM instruction first fails the current procedure then transfers 
 			  control to efail
 
-		- Generators and Goal-Directed Evaluation
-			- generators add the real power to Icons expression evaluation semantics
-			- but they present problems for the implementation
-			- there are a bunch of different generators for 
-				- control structures, functions, operators, and procedures
-			- the implementation of these can vary but the same principles apply to all of 
-			  them
-			- the result of the expression, whether is a generator or not, is retrieved in 
-			  the same way
-			- in general,generators cannot be evaluated as generators, before the 
-			  expression is actually evaluated so the implementation is designed to that the interpreter stack is the same, whether or not the expression returns or suspends
-				- this also means that arguments to an expression exist in the same relative 
-				  space
-			- in order for it to be possible for a generator to be resumed and possibly 
-			  produce a new value, the state of the generator must be preserved as well as the state of the interpreter stack
-				- the interpreter stack has to be preserved so that the surrounding 
-				  expression can utilize any value produced by the generator
-				- ex. 
-						j := (i < upto('aeiou', "Hello World"))
-				- the way Icon does this is by copying a portion of the stack before the 
-				  arguments to upto were pushed to the top of the stack and returning the result of upto to the top of the stack
-				- in this way the portion of the stack that you need to resume upto is 
-				  preserved and the arguments for the surrounding comparison (or any expression) are in the right place
-
-			- Generator Frames
-				- when an expression suspends, the state of the interpreter stack is 
-				  preserved by creating a generator frame on the istack that contains a copy of the section of the istack that the generator needs to resume to
-				- a generator frame starts with a generator frame marker which has info 
-				  about the interpreter state that must be restored if the generator is resumed
-				- there are 3 types of generator frames that have unique codes
-					- G_Csusp : suspension from a C function
-					- G_Esusp : suspension from an alternation expression
-					- G_Psusp : suspension from a procedure
-				- For the first 2 types the info saved in the generator frame marker includes
-			   	- the code for the generator type
-				  - the i-state variables efp, gfp, ipc
-				  - the source code program line number at the time when the gframe was 
-					  created
-				- ex. 
-						write( i = (1 to 3))
-
-						# the VM instructions ...
-
-							mark L1
-							global write
-							local i
-							pnull
-							int 1
-							int 3
-							push 1 				# default increment "by 1"
-							toby					# this is the generator (1 to 3 "by 1")
-							numeq
-							invoke 1
-							unmark
-						L1:
-
-						the state of the stack up to "push 1" looks like what you would expect for a normal expression, (page 146)
-
-						the interpreter will now call the RTL function for toby and suspend 
-						(not return)
-
-						there is a "suspend" construct in RTL which calls interp(), instead of returning to it
+	
 
 
 
