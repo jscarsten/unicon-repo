@@ -1,10 +1,15 @@
 Questions
+<<<<<<< HEAD
 	
 So I am a bit confused about removing C frames from the C program stack when an expression is unmarked and there are generator frames on the stack
 
 So for repeated alternation, when the expression produces a result, the current failure ipc is set to the beginning of the alternation expression L1 via chfail. This means that upon the next of expr, if it fails, the instructions for |expr execute again. Wouldn't we want to transfer control to the enclosing expression in this case? I also understand that each alternation causes a new expression marker on the stack. I am just confused about how failure is handled in general for repeated alternation.
 
 Notes for Icon/Unicon implementation textbook
+=======
+
+Notes for Icon/Unicon Implementation textbook
+>>>>>>> 42ec308e2f64340f6c9fa30d1fc66762ce862fad
 
 Preface
 	- multiple compilers
@@ -1396,20 +1401,26 @@ Expression Evaluation
 					mark L1
 
 				starts an expression frame
-			- if the following expression fails, ipc is set to the icode locationof L1
-			- the value of ipc for a label is relative to the location of the icode that is read from the icode file
+			- if the following expression fails, ipc is set to the icode location of L1
+			- the value of ipc for a label is relative to the location of the icode that 
+			  is read from the icode file
 			- mark pushes an expression frame marker onto the stack and sets the expression frame pointer (efp) to it
 			- the efp indicates the current position of the current expression frame
-				- also there is the gfp (generator frame pointer) which points to another kind of frame that is used to retain info for when an expression suspends with a result and it is possible to resume it to get another result
+				- also there is the gfp (generator frame pointer) which points to another 
+				  kind of frame that is used to retain info for when an expression suspends with a result and it is possible to resume it to get another result
 			- mark sets the gfp to 0 since there is no suspended generator for a new expression frame
 			- an expression fram marker has 4 words
 				- the value pointed to by ipc (argument of mark, called failure ipc)
 				- the previous efp
 				- the previous gfp
 				- ilevel (related to suspended generators)
+			- the failure ipc is essentially the stack position the control goes to if 
+			  the current expression fails
 			- unmark is the VM instruction that removes an expression frame
-				- unmark restores the previous efp/gfp from the current expression fram marker
-				- then it removes the current expression frame by setting sp to the word above the frame marker
+				- unmark restores the previous efp/gfp from the current expression frame
+				  marker
+				- then it removes the current expression frame by setting sp to the word 
+				  above the frame marker
 			- ex.
 					if expr1 then expr2 else expr3
 
@@ -1425,20 +1436,25 @@ Expression Evaluation
 
 			- mark create an expression frame for expr1
 			- if expr1 gives a result then unmark the frame for expr1 and go into expr2
-			- if expr1 fails then control goes to the icode corresponding to L1 and unmark is not executed 
-			- if there are no generators the failure ipc removes the current expression frame
-			- remember the previous efp must be saved in a new expression marker for nested expression frames
+			- if expr1 fails then control goes to the icode corresponding to L1 and unmark 
+			  is not executed 
+			- if there are no generators the failure ipc removes the current expression
+			  frame
+			- remember the previous efp must be saved in a new expression marker for
+			  nested expression frames
 
 		- Failure
 			- expression evaluation can be divided into 2 cases, with/without generators
 			- for this section we will not include generators
-			- without generators, if failure occurs anywhere in an expression the entire expression fails without and further evaluation
+			- without generators, if failure occurs anywhere in an expression the entire 
+			  expression fails without and further evaluation
 			- ex. 
 					i := numeric(s)
 					# if numeric(s) fails there will be no assignment and 
 					# control goes to next line		
 
-			- in the implementation failure of an expression amounts to removing the current expression frame where the failure is taking place and continuing with the ipc set to the failure ipc from it's expression frame marker
+			- in the implementation, failure of an expression amounts to removing the 
+			  current expression frame where the failure is taking place and continuing with the ipc set to the failure ipc from it's expression frame marker
 			- ex. VM instructions from previous example
 					mark L1
 					pnull
@@ -1451,32 +1467,37 @@ Expression Evaluation
 					
 					L1:
 						...
-			- Now before the first expression is evaluated there is some expression fram on the stack
+			- Now before the first expression is evaluated there is some expression frame
+			  on the stack
 			- mark L1 pushes a new expression frame and assigns the previous efp
 			- the next instructions push additional descriptors
 			- then invoke is called and numeric is called
-			- if numeric fails then efp and sp are reset to the previous 
-			values so that the stack is in the same state prior to the beginning of the expression evaluation
+			- if numeric fails then efp and sp are reset to the previous values so that 
+			  the stack is in the same state prior to the beginning of the expression evaluation
 			- L1 contains the starting icode position of the next instruction
 			- so if numeric succeeds control will transfer to L1 
 			- failure occurs at 3 levels
 				- the VM instruction efail
 				- a C function that implements some Icon operator or function
 				- an Icon procedure
-			- when a conditional operator (&, <, >) or function returns it signals the interpreter using an one of the RTL returns : return or fail
+			- when a conditional operator (&, <, >) or function returns it signals the
+			  interpreter using an one of the RTL returns : return or fail
 			- these RTL contructs just return statements with different returned values
 			- the interpreter code for a conditional variable is basically...
 				- dereference arg1
 				- dereference arg2
 				- Call_Cond
 			- Call_Cond is like Call_Op but it tests the singal returned by the C RTL function
-				- if the signal indicates that an result is produced, the control breaks in the interpreter switch statement and the interpreter loop begins with the next instruction
-				- if the signal indicates failure, control is transferred to the place in the interpreter that handles failure efail
+				- if the signal indicates that an result is produced, the control breaks in 
+				  the interpreter switch statement and the interpreter loop begins with the next instruction
+				- if the signal indicates failure, control is transferred to the place in 
+				  the interpreter that handles failure efail
 			- an Icon procedure can fail in 3 ways ...
 				- evaluating the expression "fail"
 				- the failure of the argument of a return expression
 				- flowing off the end of the procedure body
 			- The VM instructions for each case are similar
+<<<<<<< HEAD
 			- the pfail VM instruction first fails the current procedure then transfers control to efail
 
 		- Generators and Goal-Directed Evaluation
@@ -1665,6 +1686,73 @@ Expression Evaluation
 
 
 
+=======
+			- the pfail VM instruction first fails the current procedure then transfers 
+			  control to efail
+
+		- Generators and Goal-Directed Evaluation
+			- generators add the real power to Icons expression evaluation semantics
+			- but they present problems for the implementation
+			- there are a bunch of different generators for 
+				- control structures, functions, operators, and procedures
+			- the implementation of these can vary but the same principles apply to all of 
+			  them
+			- the result of the expression, whether is a generator or not, is retrieved in 
+			  the same way
+			- in general,generators cannot be evaluated as generators, before the 
+			  expression is actually evaluated so the implementation is designed to that the interpreter stack is the same, whether or not the expression returns or suspends
+				- this also means that arguments to an expression exist in the same relative 
+				  space
+			- in order for it to be possible for a generator to be resumed and possibly 
+			  produce a new value, the state of the generator must be preserved as well as the state of the interpreter stack
+				- the interpreter stack has to be preserved so that the surrounding 
+				  expression can utilize any value produced by the generator
+				- ex. 
+						j := (i < upto('aeiou', "Hello World"))
+				- the way Icon does this is by copying a portion of the stack before the 
+				  arguments to upto were pushed to the top of the stack and returning the result of upto to the top of the stack
+				- in this way the portion of the stack that you need to resume upto is 
+				  preserved and the arguments for the surrounding comparison (or any expression) are in the right place
+
+			- Generator Frames
+				- when an expression suspends, the state of the interpreter stack is 
+				  preserved by creating a generator frame on the istack that contains a copy of the section of the istack that the generator needs to resume to
+				- a generator frame starts with a generator frame marker which has info 
+				  about the interpreter state that must be restored if the generator is resumed
+				- there are 3 types of generator frames that have unique codes
+					- G_Csusp : suspension from a C function
+					- G_Esusp : suspension from an alternation expression
+					- G_Psusp : suspension from a procedure
+				- For the first 2 types the info saved in the generator frame marker includes
+			   	- the code for the generator type
+				  - the i-state variables efp, gfp, ipc
+				  - the source code program line number at the time when the gframe was 
+					  created
+				- ex. 
+						write( i = (1 to 3))
+
+						# the VM instructions ...
+>>>>>>> 42ec308e2f64340f6c9fa30d1fc66762ce862fad
+
+							mark L1
+							global write
+							local i
+							pnull
+							int 1
+							int 3
+							push 1 				# default increment "by 1"
+							toby					# this is the generator (1 to 3 "by 1")
+							numeq
+							invoke 1
+							unmark
+						L1:
+
+						the state of the stack up to "push 1" looks like what you would expect for a normal expression, (page 146)
+
+						the interpreter will now call the RTL function for toby and suspend 
+						(not return)
+
+						there is a "suspend" construct in RTL which calls interp(), instead of returning to it
 
 
 
@@ -1673,10 +1761,7 @@ Expression Evaluation
 
 
 
-
-
-
-
+				
 
 
 
