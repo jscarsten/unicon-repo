@@ -1,15 +1,10 @@
-Questions
-<<<<<<< HEAD
+Question
 	
 So I am a bit confused about removing C frames from the C program stack when an expression is unmarked and there are generator frames on the stack
 
 So for repeated alternation, when the expression produces a result, the current failure ipc is set to the beginning of the alternation expression L1 via chfail. This means that upon the next of expr, if it fails, the instructions for |expr execute again. Wouldn't we want to transfer control to the enclosing expression in this case? I also understand that each alternation causes a new expression marker on the stack. I am just confused about how failure is handled in general for repeated alternation.
 
 Notes for Icon/Unicon implementation textbook
-=======
-
-Notes for Icon/Unicon Implementation textbook
->>>>>>> 42ec308e2f64340f6c9fa30d1fc66762ce862fad
 
 Preface
 	- multiple compilers
@@ -28,14 +23,6 @@ Preface
 		- rt.a
 			- the runtime library that is linked to Icon programs compiled with iconc
 			- shared much of the code with iconx
-
-Introduction
-	- Implementing Programming Languages
-		- in conventional programming languages most of the operations that are
-		  performed upon execution can be determined statically by examining the code beforehand
-		- also, most programming languages' operations closely correspond to the 
-		  architecture of the computers on which they are executed
-		- when these two conditions are met it is easy to map source code instructions 
 		  to machine instructions for the computer to execute
 		- this translation process is called compilation
 		- in addition to a compiler most language implemetations include a run-time
@@ -55,6 +42,14 @@ Introduction
   		- Icon is a language with much of these features
   			- this means that the implementation of Icon leans much more heavily on 
   			  the runtime system than the compiler
+
+Introduction
+	- Implementing Programming Languages
+		- in conventional programming languages most of the operations that are
+		  performed upon execution can be determined statically by examining the code beforehand
+		- also, most programming languages' operations closely correspond to the 
+		  architecture of the computers on which they are executed
+		- when these two conditions are met it is easy to map source code instructions 
 
 Icon Language Overview
 	- Note: The implementer of a programming language needs a very different 
@@ -1497,7 +1492,6 @@ Expression Evaluation
 				- the failure of the argument of a return expression
 				- flowing off the end of the procedure body
 			- The VM instructions for each case are similar
-<<<<<<< HEAD
 			- the pfail VM instruction first fails the current procedure then transfers control to efail
 
 		- Generators and Goal-Directed Evaluation
@@ -1732,7 +1726,6 @@ Expression Evaluation
 						write( i = (1 to 3))
 
 						# the VM instructions ...
->>>>>>> 42ec308e2f64340f6c9fa30d1fc66762ce862fad
 
 							mark L1
 							global write
@@ -1753,8 +1746,6 @@ Expression Evaluation
 						(not return)
 
 						there is a "suspend" construct in RTL which calls interp(), instead of returning to it
-
-
 
 
 
