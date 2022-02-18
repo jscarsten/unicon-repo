@@ -1,0 +1,49 @@
+procedure main()
+	i := 2
+	k := 1
+
+	a := 1("one", "two")
+	b := 2("one", "two")
+	c := i("one", "two")
+
+	write(a, b, c)
+
+	write(i(![1,2,3,4,5], ![6,7,8,9,10]))
+	# generators dont seem to work 
+
+	every j := 1 to 10 do write(j(2,3,5,7,11,13,17,19))
+	# would there be a way to pass a list as arguments to a mutual eval
+
+	write(++k(1,2,3,4,5,6,7,8,9,10))
+
+	every l := ?[1,2] do write(l(![1,2,3,4,5], ![6,7,8,9,10]))
+	#doesnt work either, might work with co-expressions?
+
+	#m := 1
+	#while m <= 20 do {
+	#	m := m % 4 # circular index is -1 since lists indexed starting at 1
+	#	write(m(1,2,3,4,5))	
+	#	m++
+	#}
+
+	
+
+	# every m := seq() do write((m % 5)(1,2,3,4,5))
+	# infinite loop that prints the args circularly
+
+	 circular := create((seq() % 6)(1,2,3,4,5,0))
+	 # 0 is dummy element to deal with index at 1
+
+	 every 1 to 20 do write("Co-expr : ", @circular)
+
+	# if it was possible to pass a list of arguments to procedures, 
+	# then mutual evaluation could be pretty useful, maybe?
+	# im not sure if the code in this file can be done easier with other tools
+
+	list := [1,2,3,4,5]
+
+	write(list[6])
+
+	#m++
+	#this code has a weird error whe i put m++ at the end of the loop block
+end

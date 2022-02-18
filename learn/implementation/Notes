@@ -1,10 +1,22 @@
 Question
 	
-So I am a bit confused about removing C frames from the C program stack when an expression is unmarked and there are generator frames on the stack
+I understand how the every do construct works, but what about when it's just every, without a do? (every write(1 to 10)) Does this just mean that whenever a result is produced for the expression, there is an automatic failure after every suspend until the generator does not produce another result
 
-zero failure ipc?
+Why is mutual evaluation useful? I messed around with it a little and it it seems you can use it kind of like a switch statement for assignment, if you set the operand before the parenthesis to an integer variable. I tried to make the arguments generators and it would only produce the first suspended result. Are there any more cool uses for it? Maybe handling multiple co-expression activations?
 
-So for repeated alternation, when the expression produces a result, the current failure ipc is set to the beginning of the alternation expression L1 via chfail. This means that upon the next of expr, if it fails, the instructions for |expr execute again. Wouldn't we want to transfer control to the enclosing expression in this case? I also understand that each alternation causes a new expression marker on the stack. I am just confused about how failure is handled in general for repeated alternation.
+I know that by default structures are passed by reference as procedure parameters.
+Would it be possible to pass a structure by value? Perhaps you have a small structure and you would prefer to access that structure directly in the procedure rather than having to do a memory lookup. 
+
+Is it possible to pass a list to a procedure as it's arguments?
+	ex. 
+			instead of ... 
+			foo(arg1, arg2, arg3, ..., argn)
+
+			we could do ...
+			a := [arg1, arg2, arg3, ..., argn]
+			foo(a)
+
+How does circular list access work in Unicon? I was trying to do it but since lists index at zero, a list with n elements has no n % n element, i.e. list[n % n] --> list[0] does not exist. A quick and dirty fix for it is to add a dummy element to the end of the list and just increase the modulo rhs operand by 1. 
 
 Notes for Icon/Unicon implementation textbook
 
@@ -1668,10 +1680,81 @@ Expression Evaluation
 				- if expr2 succeeds, it's result is pushed to the stack
 				- limit checks to see if the result is legal (int >= 0)
 				- if the result is not legal, first it tries to convert it
-				- the pfail VM instruction first fails the current procedure then transfers 
-			  control to efail
+				- if the limit value is zero limit fails, else limit creates an expression 
+				  marker with a zero failure ipx and execution continues so expr1 is evaluated in its own expression frame
+				- if expr1 returns a result, then lsusp is called which recrements the limit 
+				  value and suspends like esusp and creates a generator frame
 
+		- Iteration
+			- theres a difference between while and every loops
+			- every is the iteration control structure and while is a conventional loop
+			- the VM instructions for while do...
+
+			L1:
+				mark0
+				code for exp1
+				pop
+				mark L1
+				code for expr2
+				unmark
+				goto L1
 	
+			- if expr1 fails then the expression fails and control goes to the surrounding 
+			  expression because failure ipc is zero
+			- if expr1 succeeds then expr2 is allocated an expression frame and begins 
+			  executing
+			- the loop repeats whether or not expr2 succeeds
+			- if expr1 fails then then the loop breaks
+			- the every do instructions are ...
+
+					mark0
+					code for expr1
+					pop
+					mark0 
+					code for expr2
+					unmark
+					efail
+
+			- if expr1 fails then the expression fails and control goes to surrounding 
+			  expression, same as while do
+			- if expr1 succeeds, then it's result is discarded by the pop instruction
+			  because expr1 is not used in any proceeding computation
+			- however expr1's expression frame is not discarded and expr2 is 
+			  evaluated in it's own expression frame inside of expr1's frame
+			- if expr2 produces a result, then failure is caused in the expr1 frame, and 
+			  the expr2 frame is removed
+			- if expr2 fails, then failure also goes to the expr1 frame 
+			- the outcome is the same, either way which is a forced failure
+			- if the expr1 frame contains a generator frame, that is if expr1 suspended, 
+			  the generator is resumed 
+	
+Functions, Procedures, and Co-Expressions
+	- expression rely on function and procedure invocation
+	- There are multiple aspects of procedures that make the implementation complicated
+	- fucntions and procedures are data values that can have assigned identifiers in
+		Icon
+	- this being said, the value of a procedure cannot be known until it is evaluated 
+	  at runtime
+	- functions and procedures can also be called with less or more arguments than 
+	  expected
+	- Co-Expressions need their own program stacks which further complicate things
+	- ex.
+			expr0(expr1, expr2, ..., exprn) has VM instructions...
+
+			code for expr0
+			code for expr1
+			code for expr2
+			...
+			code for exprn
+			invoke n
+
+	- each time the code for an expression is evaluated the result is pushed to the 
+	  stack, so the stack will have exprn's result at the top
+	- the action taken by invoke depends on the result of expr0
+	- if expr0 is an integer (or convertable to int), then the invokation expression corresponds to mutual evaluation
+
+
+
 
 
 
