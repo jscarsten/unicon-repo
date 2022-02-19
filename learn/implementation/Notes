@@ -18,6 +18,8 @@ Is it possible to pass a list to a procedure as it's arguments?
 
 How does circular list access work in Unicon? I was trying to do it but since lists index at zero, a list with n elements has no n % n element, i.e. list[n % n] --> list[0] does not exist. A quick and dirty fix for it is to add a dummy element to the end of the list and just increase the modulo rhs operand by 1. 
 
+In the book it says, the macro FncDel occurs at the beginning of every C function that implements an Icon function. I did a grep search but I couldn't find an instance of this macro.
+
 Notes for Icon/Unicon implementation textbook
 
 Preface
@@ -1730,11 +1732,13 @@ Expression Evaluation
 	
 Functions, Procedures, and Co-Expressions
 	- expression rely on function and procedure invocation
-	- There are multiple aspects of procedures that make the implementation complicated
-	- fucntions and procedures are data values that can have assigned identifiers in
+	- There are multiple aspects of procedures that make the 
+	  implementation complicated
+	- fucntions and procedures are data values that can have assigned 
+	  identifiers in
 		Icon
-	- this being said, the value of a procedure cannot be known until it is evaluated 
-	  at runtime
+	- this being said, the value of a procedure cannot be known until it 
+	  is evaluated at runtime
 	- functions and procedures can also be called with less or more arguments than 
 	  expected
 	- Co-Expressions need their own program stacks which further complicate things
@@ -1752,6 +1756,33 @@ Functions, Procedures, and Co-Expressions
 	  stack, so the stack will have exprn's result at the top
 	- the action taken by invoke depends on the result of expr0
 	- if expr0 is an integer (or convertable to int), then the invokation expression corresponds to mutual evaluation
+		- if its mutual evaluation, then the nth argument is copied on top of the result of expr0
+		- sp is set to this location and invoke transfers control to the top of the interpretive loop
+	- invoke fails if the integer is out of range
+	- if expr0 is a function or procudure, then the corresponding function/procedure must be called with the arguments
+	- each procedure and function have their own descriptor
+
+	- Procedure Blocks
+		- procedure blocks are constructed by the linker using info from the translator
+		- these blocks are read in as a part of the icode file when an icon file is executed
+		- procedure blocks contain ...
+			- title word
+			- size word
+			- icode location of the first VM instruction for the procedure
+			- number of arguments expected
+			- number of local identifiers in the procedure
+			- number of static identifiers in the procedure
+			- the index of the static identifier array of the first static identifier on the procedure
+			- a c string for the name of the file in which the procedure delcaratioin occurred
+			- the rest of the block contains the following qualifiers ... 
+				- the string name of the procedure 
+				- the string names of the arguments
+				- the string names of the local and static identifiers
+			- the indices for the static indentifier array are indexed by 0
+		
+		- Function Blocks
+			- function blocks are similar to procedure blocks, they have the same source language type distinction
+			- function blocks are created using the marc FncDel that occurs ar the beginning of every C function that implements an Icon function
 
 
 
