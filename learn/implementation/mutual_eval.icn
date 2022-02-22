@@ -40,10 +40,12 @@ procedure main()
 	# then mutual evaluation could be pretty useful, maybe?
 	# im not sure if the code in this file can be done easier with other tools
 
-	list := [1,2,3,4,5]
+	testList := [1,2,3,4,5,0]
 
-	write(list[6])
+	every i := 1 to 20 do write("Indexing : ", testList[i % 6])
 
 	#m++
 	#this code has a weird error whe i put m++ at the end of the loop block
-end
+	end
+
+

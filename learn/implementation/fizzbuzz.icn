@@ -1,0 +1,28 @@
+procedure fizzBuzz1()
+	every i := 1 to 100 do {
+		s := ""
+		if i % 3 == 0 then s := s || "fizz"
+		if i % 5 == 0 then s := s || "buzz"
+
+		if s == "" then write(i) else write(s)
+		
+	}
+end
+
+procedure fizzBuzz2()
+	gen := create(seq())
+
+	while((i := @gen) <= 100) do{
+		if (j := i % 15) == 0 then write("fizzbuzz")
+
+		if j % 3 == 0 then write("fizz")
+		else if j % 5 == 0 then write("buzz")
+		else write(i)
+	}
+end
+
+
+procedure main()
+	write("fizzBuzz1: "); fizzBuzz1()
+	write("fizzBuzz2: "); fizzBuzz2()
+end
