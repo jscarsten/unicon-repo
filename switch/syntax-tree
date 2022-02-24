@@ -1,0 +1,43 @@
+Compiler Stack
+
+1. Source File -> Scanner (lexical analysis) -> Token Stream
+
+2. Token Stream -> Parser (syntax analysis) -> Parse Tree
+
+3. Parse Tree -> Semantic Analysis -> Abstract Syntax Tree (AST)
+
+4. (Optional) Abstract Syntax Tree -> Code Optimization -> Intermediate Form
+
+5. Intermediate Form / AST -> Target Code Generation -> Target Language
+
+
+
+Scanner
+	- a scanner produces a stream of tokens 
+	- ex. 
+		void swap(int *v1, int *v2){
+			...
+			*v2 = tmp
+		}
+
+		produced the stream ...
+
+		[}] [;] [tmp]... [(] [swap] [void]
+
+lex
+	- scanner generator
+	- lex will allow us to input a set of regex, with associated expressions
+		- written in C
+	- output is a table-driven scanner (lex.yy.cc)
+	- flex
+		- the open source implementation of lex
+	- lex input template
+
+		FIRST PART
+		%%
+		pattern			action
+		...
+		%%
+		THIRD PART
+	
+
