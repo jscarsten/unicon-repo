@@ -18,12 +18,9 @@ Is it possible to pass a list to a procedure as it's arguments?
 
 How does circular list access work in Unicon? I was trying to do it but since lists index at zero, a list with n elements has no n % n element, i.e. list[n % n] --> list[0] does not exist. A quick and dirty fix for it is to add a dummy element to the end of the list and just increase the modulo rhs operand by 1. 
 
-In the book it says, the macro FncDel occurs at the beginning of every C function that implements an Icon function. I did a grep search but I couldn't find an instance of this macro.
+In the book it says, the macro FncDcl occurs at the beginning of every C function that implements an Icon function. I did a grep search but I couldn't find an instance of this macro.
 
-Function blocks have a number of blank words that appear after the function indicator word (number of local identifiers word). Why are these words unused?
 Notes for Icon/Unicon implementation textbook
-
-In the book it says that Arg0 is given to the C function that corresponds to the fucntion being called. I understand the purpose of Arg0 but the book also says that Arg0 is the descriptor that points to the procedure block. Is this true because the procedure comes directly after Arg0 on the stack. 
 
 Preface
 	- multiple compilers
@@ -1783,44 +1780,9 @@ Functions, Procedures, and Co-Expressions
 				- the string names of the local and static identifiers
 			- the indices for the static indentifier array are indexed by 0
 		
-	- Function Blocks
-		- function blocks are similar to procedure blocks, they have the same source
-			language type distinction
-		- function blocks are created using the marc FncDel that occurs ar the 
-		  beginning of every C function that implements an Icon function
-		- these blocks have one additional value which is the value -1 in the word
-		  that would contain the number of local identifiers
-			- this is the function indicator
-		- some function blocks have blank names for arguments 
-		- if a function takes an arbitrary number of arguments (like write()), the 
-		  value -1 will be placed in the number of arguments word
-
-	- Invokation
-		- Argument Processing 
-			- starts by dereferencing the arguments in place on the stack
-			- if a fixed number of arguments is specified in the procedure block, then 
-			  that number is compared to the argument of invoke (num of args on stack)
-			- If there are too many args, sp is set to point to the last expected arg
-			- ex. 
-					numeric(i, j)
-
-					sp will be set to the word containing i since numeric only takes 1 argument
-					this essentially pops j off the stack
-			- on the other hand if there are too few arguments, then null descriptors are 
-			  pushed as place holders
-		
-		- Function Invokation
-			- involves calling a corresponding C function in a way that is similar to an 
-			  operator
-			- the C function entry point is retrieved from the procedure block rather than 
-			  having an array of function pointers for each OpCode
-			- For a function that has a fixed number of arguments, the C function is 
-			  called with a single argument that is a pointer to Arg0 on the stack
-			- if a function is called with an arbitrary number of arguments the number of
-			  arguments is also passed to the C function
-			- exactly like operators, a function can fail, return a result, or suspend
-
-
+		- Function Blocks
+			- function blocks are similar to procedure blocks, they have the same source language type distinction
+			- function blocks are created using the marc FncDel that occurs ar the beginning of every C function that implements an Icon function
 
 
 
