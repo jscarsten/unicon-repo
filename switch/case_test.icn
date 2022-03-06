@@ -1,7 +1,10 @@
-record complex(re, im)
+record treenode(re, im)
 
 procedure main()
 	node := treenode("Node1", [])
 
 	write(type(node))
+
+	a := [1,2,3]
+	write(*a)
 end
