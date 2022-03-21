@@ -1,10 +1,13 @@
 record treenode(re, im)
 
 procedure main()
-	node := treenode("Node1", [])
-
-	write(type(node))
-
-	a := [1,2,3]
-	write(*a)
+	i := 10
+	case i + 5 of {
+		10 : write("15")
+		20 : write("20")
+	}
 end
+
+# classify types (type 1,2,3)
+# print integer literals to stdout
+# identify range and number of elements for array

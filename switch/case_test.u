@@ -1,0 +1,93 @@
+version	U12.1.00
+uid	case_test.u1-1646696402-0
+record	treenode,2
+	0,re
+	1,im
+impl	local
+global	2
+	0,000011,treenode,2
+	1,000005,main,0
+
+proc main
+	local	0,000000,i
+	local	1,000000,write
+	con	0,002000,2,10
+	con	1,002000,1,5
+	con	2,010000,2,061,065
+	con	3,002000,2,20
+	con	4,010000,2,062,060
+	declend
+	filen	case_test.icn
+	line	3
+	colm	11
+	synt	any
+	mark	L1
+	pnull
+	var	0
+	int	0
+	line	4
+	colm	11
+	synt	any
+	asgn
+	unmark
+lab L1
+	mark	L2
+	line	5
+	colm	9
+	synt	case
+	mark0
+	pnull
+	var	0
+	int	1
+	line	5
+	colm	16
+	synt	any
+	plus
+	eret
+	mark	L4
+	ccase
+	int	0
+	line	6
+	colm	20
+	synt	any
+	eqv
+	unmark
+	pop
+	var	1
+	str	2
+	line	6
+	colm	27
+	synt	any
+	invoke	1
+	goto	L3
+lab L4
+	mark	L5
+	ccase
+	int	3
+	line	7
+	colm	20
+	synt	any
+	eqv
+	unmark
+	pop
+	var	1
+	str	4
+	line	7
+	colm	27
+	synt	any
+	invoke	1
+	goto	L3
+lab L5
+	efail
+lab L3
+	line	5
+	colm	9
+	synt	endcase
+	unmark
+lab L2
+	pnull
+	line	9
+	colm	1
+	synt	any
+	pfail
+	end
