@@ -1,19 +1,33 @@
 procedure main()
 	i := 10
 	case i + 5 of {
-		10 : write("10")
-		20 : write("20")
-		30 : write("30")
-		40 : write("30")
-		50 : write("30")
-		60 : write("30")
-		70 : write("30")
-		80 : write("30")
-		'abcd' : write("30")
+		11 : write("10")
+		23 : write("20")
+		37 : write("30")
+		45 : write("30")
+		53 : write("30")
+		69 : write("30")
+		71 : write("30")
+		85 : write("30")
+		90 : write("30")
 	}
 end
 
 # classify types (type 1,2,3)
 # print integer literals to stdout
 # identify range and number of elements for array
+
+# understand VM instructions for case expressions
+# what is colm? synt? ccase? (in context of case expr VM instructions)
+
+# what I think is going on 
+
+# interpreter evaluates the case expression declaration
+# some anonymous variable is initiallized and set to 1
+# go to next line to get first case
+# colm 20 is executed?
+# synt any is executed?
+# then eqv does the comparison, the previous 2 instructions must retrive the proper expressions
+
+
 

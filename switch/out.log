@@ -73,7 +73,7 @@ current frame :
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 CASE EXPRESSION FOUND
-0
+i
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 node type: treenode
 node label: Case
@@ -528,5 +528,4 @@ node type: null
 ------------------------------------
 current frame :
 
-/home/conman/unicon/bin/icont -c   -O case_test.icn /tmp/uni91359251
-/home/conman/unicon/bin/icont  case_test.u
+/home/conman/unicon/bin/icont -c   -O case_test.icn /tmp/uni15192860
