@@ -23,6 +23,7 @@ current frame :
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -33,6 +34,54 @@ node type: null
 current frame :
 
 node type: null
+
+------------------------------------
+current frame :
+
+node type: treenode
+node label: procbody
+
+------------------------------------
+current frame :
+
+node type: treenode
+node label: invoke
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+node type: treenode
+node label: keyword
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+string
 
 ------------------------------------
 current frame :
@@ -49,18 +98,22 @@ node label: assign
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -73,7 +126,6 @@ current frame :
 
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 CASE EXPRESSION FOUND
-i
 &&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 node type: treenode
 node label: Case
@@ -81,6 +133,7 @@ node label: Case
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -91,34 +144,27 @@ node label: Bplus
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
-
-------------------------------------
-current frame :
-
-node type: treenode
-node label: Caselist
-
-------------------------------------
-current frame :
-
-node type: treenode
-node label: Caselist
+token
 
 ------------------------------------
 current frame :
@@ -160,41 +206,13 @@ node label: Caselist
 current frame :
 
 node type: treenode
-node label: cclause1
-
-------------------------------------
-current frame :
-
-
-------------------------------------
-current frame :
-
+node label: Caselist
 
 ------------------------------------
 current frame :
 
 node type: treenode
-node label: invoke
-
-------------------------------------
-current frame :
-
-
-------------------------------------
-current frame :
-
-
-------------------------------------
-current frame :
-
-
-------------------------------------
-current frame :
-
-
-------------------------------------
-current frame :
-
+node label: Caselist
 
 ------------------------------------
 current frame :
@@ -205,10 +223,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -219,22 +239,27 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -245,10 +270,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -259,22 +286,27 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -285,10 +317,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -299,22 +333,27 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -325,10 +364,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -339,22 +380,27 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -365,10 +411,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -379,22 +427,27 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -405,10 +458,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -419,22 +474,27 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -445,10 +505,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -459,22 +521,27 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
@@ -485,10 +552,12 @@ node label: cclause1
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
@@ -499,26 +568,79 @@ node label: invoke
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+token
 
 ------------------------------------
 current frame :
 
+string
 
 ------------------------------------
 current frame :
 
+node type: treenode
+node label: cclause1
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+node type: treenode
+node label: invoke
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+token
+
+------------------------------------
+current frame :
+
+string
 
 ------------------------------------
 current frame :
@@ -528,4 +650,7 @@ node type: null
 ------------------------------------
 current frame :
 
-/home/conman/unicon/bin/icont -c   -O case_test.icn /tmp/uni15192860
+token
+/home/conman/unicon/bin/unicont -c  -u  -O case_test.icn /tmp/uni78460284
+/home/conman/unicon/bin/unicont  case_test.u
+id :case_test.u, s:version

@@ -160,3 +160,7 @@ Ideas:
 			- would be difficult
 		- can we construct a perfect hash function? if we can what would be the construction time? is it even worth it?
 	- I read something about converting individual characters of a string into ascii and then using a two-step trivial hash function to obtain a final index for a jump tbale with 0 gaps. I didnt really understand it
+
+cve.sourceforge.net
+unicon/uni/unicon
+unicon/ipl/packs progs procs
